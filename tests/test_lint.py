@@ -438,6 +438,13 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertNotIn("--target TARGET", prompt)
         self.assertNotIn("<OFFICIAL_REPOSITORY_URL>", prompt)
 
+    def test_official_install_prompt_includes_gitee_fallback(self) -> None:
+        prompt = print_install_prompt.render("songhai-dg/review-write")
+        self.assertIn("https://github.com/songhai-dg/review-write", prompt)
+        self.assertIn("https://gitee.com/cufe01/songhai-dg", prompt)
+        self.assertIn("版本标签和提交", prompt)
+        self.assertIn("SHA-256", prompt)
+
     def test_legacy_skill_directory_is_not_installed_in_parallel(self) -> None:
         import tempfile
 
