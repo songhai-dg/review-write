@@ -21,8 +21,8 @@ jobs:
     if: github.repository == 'songhai-dg/review-write'
     runs-on: ubuntu-latest
     env:
-      GITEE_OWNER: songhai-dg
-      GITEE_REPO: review-write
+      GITEE_OWNER: cufe01
+      GITEE_REPO: songhai-dg
 
     steps:
       - name: Check out the complete history
