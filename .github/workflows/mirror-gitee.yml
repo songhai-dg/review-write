@@ -39,7 +39,7 @@ jobs:
           test -n "$GITEE_TOKEN" || { echo "Missing GITEE_TOKEN secret" >&2; exit 1; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local credential.helper '!f() { echo "username=oauth2"; echo "password=${GITEE_TOKEN}"; }; f'
+          git config --local credential.helper '!f() { echo "username=cufe01"; echo "password=${GITEE_TOKEN}"; }; f'
           git remote add gitee "https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
 
       - name: Push main to Gitee
