@@ -23,6 +23,8 @@ jobs:
     env:
       GITEE_OWNER: cufe01
       GITEE_REPO: songhai-dg
+      # Keep the token available to the credential helper when later push steps run.
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN || secrets.GITEE }}
 
     steps:
       - name: Check out the complete history
@@ -32,9 +34,6 @@ jobs:
           persist-credentials: false
 
       - name: Configure a temporary Gitee credential helper
-        env:
-          # Accept the existing GITEE secret and the documented GITEE_TOKEN name.
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN || secrets.GITEE }}
         run: |
           test -n "$GITEE_TOKEN" || { echo "Missing GITEE_TOKEN secret" >&2; exit 1; }
           git config user.name "github-actions[bot]"
