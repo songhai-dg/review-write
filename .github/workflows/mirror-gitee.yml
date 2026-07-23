@@ -7,6 +7,11 @@ on:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional existing tag to mirror, for example v0.4.0"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -48,3 +53,9 @@ jobs:
       - name: Push the released tag to Gitee
         if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
         run: git push gitee "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+
+      - name: Push a manually requested existing tag to Gitee
+        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+        env:
+          MIRROR_TAG: ${{ inputs.tag }}
+        run: git push gitee "refs/tags/${MIRROR_TAG}:refs/tags/${MIRROR_TAG}"
