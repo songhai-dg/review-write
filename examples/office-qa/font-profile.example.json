@@ -1,0 +1,18 @@
+{
+  "name": "example-bilingual-template",
+  "fonts": {
+    "eastAsia": ["已确认的中文正文字体"],
+    "latin": ["Confirmed Latin Body Font"],
+    "complex": ["Confirmed Complex Script Font"]
+  },
+  "docx": {
+    "fonts": {
+      "eastAsia": ["已确认的中文正文字体"]
+    }
+  },
+  "pptx": {
+    "fonts": {
+      "eastAsia": ["已确认的演示中文字体"]
+    }
+  }
+}

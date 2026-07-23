@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify tag and project version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, str(Path("scripts").resolve()))
+          import bump_version
+          actual = f"v{bump_version.synchronized_current()}"
+          expected = os.environ["RELEASE_TAG"]
+          if actual != expected:
+              raise SystemExit(f"tag {expected} does not match project {actual}")
+          PY
+      - name: Validate and test
+        run: |
+          python3 scripts/validate_skill.py
+          python3 -m unittest discover -s tests -v
+      - name: Build and checksum
+        run: |
+          python3 scripts/package_skill.py
+          python3 scripts/print_install_prompt.py --repo "$GITHUB_REPOSITORY" > dist/install-prompt.txt
+          python3 scripts/render_release_notes.py > dist/release-notes.md
+          cd dist
+          sha256sum review-write-*.skill > review-write-${GITHUB_REF_NAME#v}.skill.sha256
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: "dist/review-write-*.skill"
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/review-write-*.skill \
+            dist/review-write-${GITHUB_REF_NAME#v}.skill.sha256 \
+            dist/install-prompt.txt \
+            --verify-tag \
+            --notes-file dist/release-notes.md

@@ -1,0 +1,46 @@
+---
+name: review-write
+description: Review and rewrite Chinese or English professional prose, with optional audit-only DOCX/PPTX font and render QA, while preserving facts, citations, qualifications, intent, author voice, and source Office files.
+version: 0.3.0
+license: MIT
+metadata:
+  hermes:
+    tags: [writing, review, rewrite, chinese, academic, policy]
+    category: productivity
+  reviewwrite:
+    maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
+---
+
+# ReviewWrite
+
+先审后写。根据用户要求和原文判断语言、读者、目的、体裁、证据和可修改范围，不要把某一种体裁、语言或“像人”规则强套到所有文本。
+
+## 硬边界
+
+- 不伪造事实、数字、引用、来源、经历、情绪或写作过程。
+- 默认保护数字、日期、比例、单位、专名、定义、引用、政策口径、义务、期限、例外和不确定性。
+- 不把提示词、隐藏推理、工具调用、文件路径、编辑指令、任务复述或模型自述写进正式正文。
+- 不承诺规避 AI 检测，不通过错别字、虚构细节或随机句式伪装真人。
+
+## 工作方式
+
+1. 先从用户要求和文本建立最小契约；信息不足时采用保守假设，只有会改变法律、政策、学术或事实含义时才澄清。
+2. 按实际问题选择评审维度、体裁表达和参考资料；参考资料是候选知识，不是固定模板。需要外部事实时才搜索，不能用搜索结果填补原文缺失的事实。
+3. 先识别问题和证据位置，再制定 `preserve`、`repair`、`optional`、`acceptance`，然后改写并逐项复核事实和限定条件。
+4. 用户只说“改一下”“润色一下”时默认只交付正文；明确要求评审时才展示评审。不得在正文末尾添加“如果你需要”“我可以继续”等聊天式收尾。
+5. 用户提供 `.docx`/`.pptx` 或要求检查乱码、字体混乱、中文/英文回退、截断、换行时，完成正文审写后按 [Office QA](references/office-qa.md) 执行只读审计。默认不改文件：确认模板/profile、运行 `python3 scripts/office_qa.py <file> --format json`、在可用时渲染并逐页检查。没有 profile、目标字体清单或视觉检查时，不得声称字体已合规或所有设备均可正常显示。
+
+遇到“真正值得、真正改变、全面提升、赋能、助力、具有重要意义”“换句话说”“答案很可能不是”“这也是最危险的地方”等表达，不要机械删词；先检查是否有明确标准、主体、动作、对象、范围或证据。对公式化转折，只有其后确有新的释义、风险判断或证据时保留；否则直接写判断、因果或条件。有正式定义、对比或统计依据就保留。
+
+## 输出边界
+
+评审并改写时使用四个 surface，标签外不添加聊天内容：
+
+```text
+<review_report>问题、证据位置、严重程度和建议</review_report>
+<revision_plan>preserve、repair、optional、acceptance</revision_plan>
+<deliverable_body>可直接交付的正式正文</deliverable_body>
+<verification_report>事实、引用、泄漏、体裁和待确认项的复核</verification_report>
+```
+
+只有 `deliverable_body` 是正式交付正文。`review-only` 只输出评审，`rewrite-only` 或 `deliverable-only` 只输出正文。正文必须像真实作者或机构写给真实读者的文本，不得包含评审、过程或助手话术。

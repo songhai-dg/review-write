@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "repository": "songhai-dg/review-write",
+  "current_version": "0.3.0",
+  "channels": {
+    "stable": {
+      "schedule": "weekly-if-qualified",
+      "prerelease": false,
+      "purpose": "经过完整评测、面向普通用户的稳定版本"
+    },
+    "edge": {
+      "schedule": "daily-if-qualified",
+      "prerelease": true,
+      "purpose": "通过基础门禁、供早期用户验证的候选版本"
+    }
+  },
+  "update": {
+    "default_policy": "notify",
+    "allowed_policies": [
+      "off",
+      "notify",
+      "auto-patch",
+      "auto-minor"
+    ],
+    "check_interval_hours": 24,
+    "apply_timing": "after-task-or-scheduled",
+    "never_update_during_active_task": true,
+    "never_overwrite_git_checkout": true,
+    "require_sha256": true,
+    "require_github_attestation_for_automatic_apply": true
+  },
+  "release_gates": [
+    "structure-validation",
+    "unit-tests",
+    "leakage-regression",
+    "fewshot-provenance",
+    "protected-fact-regression",
+    "office-qa-regression",
+    "changelog",
+    "human-review-for-stable"
+  ]
+}

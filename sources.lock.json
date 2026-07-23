@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-21",
+  "sources": [
+    {
+      "name": "stop-slop",
+      "repository": "https://github.com/hardikpandya/stop-slop",
+      "commit": "8da1f030185bdfe8471220585162991eaeb970e9",
+      "license": "MIT",
+      "integration": "method-study",
+      "capabilities": [
+        "formulaic phrase review",
+        "structural pattern review",
+        "rhythm and density rubric",
+        "before-after examples"
+      ]
+    },
+    {
+      "name": "Humanizer-zh",
+      "repository": "https://github.com/op7418/Humanizer-zh",
+      "commit": "91f3d394db8419c20d67ebe22a96cf8fee0a404b",
+      "license": "MIT",
+      "integration": "method-study",
+      "capabilities": [
+        "Chinese formulaic writing patterns",
+        "vague attribution review",
+        "promotional tone review",
+        "formatting pattern review"
+      ]
+    },
+    {
+      "name": "skill-deslop",
+      "repository": "https://github.com/stephenturner/skill-deslop",
+      "commit": "a906154bef375d9d49ed2ad7da13b2db16f0d3d2",
+      "license": "MIT",
+      "integration": "method-study",
+      "capabilities": [
+        "scientific register adaptation",
+        "domain terminology preservation",
+        "scientific before-after examples"
+      ]
+    }
+  ]
+}

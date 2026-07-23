@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "purpose": "Synthetic ReviewWrite end-to-end simulations. These samples test leakage repair and genre calibration, not AI authorship detection.",
+  "samples": [
+    {
+      "id": "academic-abstract-zh",
+      "language": "zh-CN",
+      "genre": "academic-paper",
+      "input": "inputs/academic-abstract.zh.md",
+      "output": "outputs/academic-abstract.zh.md",
+      "minimum_input_failures": 4,
+      "minimum_input_warnings": 3,
+      "protected_literals": [
+        "2024 年",
+        "3 个省",
+        "186 家",
+        "74 家",
+        "112 家",
+        "4.8%",
+        "95% CI：1.2%–8.4%",
+        "p=0.009",
+        "不能直接外推至其他地区",
+        "不足以识别长期因果效应"
+      ]
+    },
+    {
+      "id": "grant-rationale-zh",
+      "language": "zh-CN",
+      "genre": "grant-proposal",
+      "input": "inputs/grant-rationale.zh.md",
+      "output": "outputs/grant-rationale.zh.md",
+      "minimum_input_failures": 3,
+      "minimum_input_warnings": 4,
+      "protected_literals": [
+        "3 年",
+        "2018—2025 年",
+        "12 个地区",
+        "月度面板",
+        "平均绝对误差",
+        "不低于 10%",
+        "至少 80%",
+        "双人数据审计"
+      ]
+    },
+    {
+      "id": "policy-brief-zh",
+      "language": "zh-CN",
+      "genre": "policy-brief",
+      "input": "inputs/policy-brief.zh.md",
+      "output": "outputs/policy-brief.zh.md",
+      "minimum_input_failures": 2,
+      "minimum_input_warnings": 4,
+      "protected_literals": [
+        "2025 年第四季度",
+        "8 个区",
+        "12 项",
+        "38%",
+        "27%",
+        "2026 年第三季度",
+        "4 项",
+        "重复提交率",
+        "平均办理时间",
+        "申诉率"
+      ]
+    },
+    {
+      "id": "executive-memo-en",
+      "language": "en",
+      "genre": "executive-memo",
+      "input": "inputs/executive-memo.en.md",
+      "output": "outputs/executive-memo.en.md",
+      "minimum_input_failures": 4,
+      "minimum_input_warnings": 4,
+      "protected_literals": [
+        "June 30, 2026",
+        "1,240 tickets",
+        "46%",
+        "7 days",
+        "6 FTE",
+        "4 employees",
+        "14 days",
+        "300 tickets",
+        "July 15, 2026",
+        "18%"
+      ]
+    }
+  ]
+}

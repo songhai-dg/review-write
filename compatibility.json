@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "reviewwrite_version": "0.3.0",
+  "format": "agentskills.io-compatible",
+  "maintainer": "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）",
+  "checked_at": "2026-07-21",
+  "language_support": {
+    "core": [
+      "zh-CN",
+      "en"
+    ],
+    "experimental": [],
+    "planned": "Additional languages require a reviewed language pack, locale-aware few-shots, regressions, and professional native-language review."
+  },
+  "office_qa": {
+    "status": "audit-only",
+    "formats": [
+      "docx",
+      "pptx"
+    ],
+    "default_behavior": "read-only structural audit; no automatic font replacement",
+    "render_gate": "host-dependent; rendered previews require page-by-page human inspection",
+    "profile_requirement": "template or confirmed JSON font profile is required before any future repair workflow"
+  },
+  "platforms": {
+    "codex": {
+      "status": "compatible",
+      "checked_local_version": "0.144.6",
+      "user_path": null,
+      "project_path": null,
+      "invocation": "$review-write",
+      "install_mode": "platform-native-or-agent-managed",
+      "docs": "https://developers.openai.com/codex/skills"
+    },
+    "claude-code": {
+      "status": "compatible",
+      "checked_local_version": "2.1.198",
+      "user_path": null,
+      "project_path": null,
+      "invocation": "/review-write",
+      "install_mode": "platform-native-or-agent-managed",
+      "note": "Use the current host discovery and installation mechanism; do not infer a path from another client.",
+      "docs": "https://code.claude.com/docs/en/skills"
+    },
+    "hermes-agent": {
+      "status": "compatible",
+      "checked_local_version": "local-source-install",
+      "user_path": null,
+      "project_path": null,
+      "invocation": "/review-write",
+      "install_mode": "platform-native-or-agent-managed",
+      "note": "Use the active profile's native discovery and refresh mechanism.",
+      "docs": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/work-with-skills.md"
+    },
+    "gemini-cli": {
+      "status": "compatible",
+      "checked_local_version": "0.35.3",
+      "user_path": null,
+      "project_path": null,
+      "invocation": "natural-language activation; manage with /skills",
+      "install_mode": "platform-native-or-agent-managed",
+      "note": "Use Gemini's current native skills discovery and reload capability; do not infer a directory from another client.",
+      "docs": "https://geminicli.com/docs/cli/using-agent-skills/"
+    },
+    "github-copilot": {
+      "status": "compatible",
+      "checked_local_version": "gh 2.86.0; gh skill unavailable until 2.90.0+",
+      "user_path": null,
+      "project_path": null,
+      "invocation": "natural-language activation",
+      "install_mode": "platform-native-or-agent-managed",
+      "note": "Use the host integration's current Agent Skills discovery and installation mechanism.",
+      "docs": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills"
+    },
+    "openclaw": {
+      "status": "compatible",
+      "checked_local_version": "2026.6.11",
+      "user_path": "managed by openclaw skills install --global",
+      "project_path": "active OpenClaw workspace skills directory",
+      "invocation": "natural-language or configured agent skill selection",
+      "install_mode": "openclaw-cli",
+      "note": "Prefer the host's native skill installation and verification flow for the active workspace or managed scope.",
+      "docs": "https://docs.openclaw.ai/cli/skills"
+    },
+    "workbuddy": {
+      "status": "compatible-via-package-upload",
+      "checked_local_version": null,
+      "user_path": "managed by WorkBuddy Skills UI",
+      "project_path": "managed by WorkBuddy workspace",
+      "invocation": "/review-write or skill selector",
+      "install_mode": "ui-upload",
+      "note": "Use the host UI or native skill channel, then verify the skill is visible and loadable.",
+      "docs": "https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market"
+    },
+    "generic": {
+      "status": "compatible-core",
+      "checked_local_version": null,
+      "user_path": "agent-specific",
+      "project_path": "agent-specific",
+      "invocation": "agent-specific",
+      "install_mode": "copy",
+      "note": "Requires an Agent Skills compatible loader that reads SKILL.md plus relative references and scripts.",
+      "docs": "https://agentskills.io"
+    }
+  }
+}

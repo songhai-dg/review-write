@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "selection_limit": 3,
+  "selection_layers": [
+    "risk-repair",
+    "genre-locale-calibration",
+    "author-voice"
+  ],
+  "routing_dimensions": [
+    "authorization",
+    "language",
+    "locale",
+    "discourse-community",
+    "genre",
+    "issue-tags",
+    "register",
+    "protected-features"
+  ],
+  "fallback": "Use no example when language, authorization, or cultural context is not sufficiently matched.",
+  "examples": [
+    {
+      "id": "zh-process-leakage-001",
+      "path": "prompt-leakage.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "professional-general",
+      "genres": ["general", "research-report", "policy-brief"],
+      "issue_tags": ["process-leakage", "reasoning-leakage", "task-recap"],
+      "protected_features": ["facts", "deliverable-boundary"],
+      "register": "professional",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "zh-policy-brief-001",
+      "path": "policy-brief.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "public-policy",
+      "genres": ["policy-brief"],
+      "issue_tags": ["vague-claim", "unsupported-significance", "actionability"],
+      "protected_features": ["policy-scope", "action-owner"],
+      "register": "institutional",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "zh-academic-001",
+      "path": "academic.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "academic",
+      "genres": ["academic-paper", "research-report"],
+      "issue_tags": ["overclaim", "meta-commentary", "qualifier-preservation"],
+      "protected_features": ["claim-strength", "qualifiers"],
+      "register": "academic",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "zh-grant-001",
+      "path": "grant.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "research-funding",
+      "genres": ["grant-proposal"],
+      "issue_tags": ["promotional-tone", "innovation", "evidence-boundary"],
+      "protected_features": ["innovation-scope", "evidence-boundary"],
+      "register": "formal",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "zh-public-article-001",
+      "path": "public-article.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "general-public",
+      "genres": ["public-article"],
+      "issue_tags": ["formulaic-opening", "forced-drama", "specificity"],
+      "protected_features": ["factual-specifics", "authorial-integrity"],
+      "register": "public-facing",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "zh-formulaic-bridge-001",
+      "path": "formulaic-bridges.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "general-public",
+      "genres": ["public-article", "general", "marketing-copy"],
+      "issue_tags": ["formulaic-bridge", "empty-emphasis", "specificity"],
+      "protected_features": ["facts", "numbers", "risk-logic"],
+      "register": "public-facing",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "en-process-leakage-001",
+      "path": "prompt-leakage.en.md",
+      "language": "en",
+      "locale": "en-general",
+      "discourse_community": "professional-general",
+      "genres": ["general", "academic-paper", "research-report"],
+      "issue_tags": ["process-leakage", "reasoning-leakage", "chat-handoff"],
+      "protected_features": ["facts", "deliverable-boundary"],
+      "register": "professional",
+      "source": "synthetic",
+      "license": "project-original"
+    }
+  ]
+}
