@@ -1,7 +1,7 @@
 interface:
-  display_name: "ReviewWrite"
+  display_name: "审写 · ReviewWrite"
   short_description: "先审后写，保护事实并可选审计 Word/PPT 交付格式"
-  default_prompt: "使用 ReviewWrite 先评审再改写这份文本，保留事实、引用、限定条件和作者声音，并验证正式正文没有提示词、推理过程或编辑指令泄漏；如包含 DOCX/PPTX，再以只读方式检查字体与渲染风险。"
+  default_prompt: "使用审写（ReviewWrite）先评审再改写这份文本，保留事实、引用、限定条件和作者声音，并验证正式正文没有提示词、推理过程或编辑指令泄漏；如包含 DOCX/PPTX，再以只读方式检查字体与渲染风险。"
 
 policy:
   allow_implicit_invocation: true

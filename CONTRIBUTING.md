@@ -1,4 +1,4 @@
-# Contributing to ReviewWrite
+# Contributing to 审写 · ReviewWrite
 
 感谢参与 ReviewWrite。项目优先接受能够提高真实写作质量、降低语义漂移或减少误报的贡献。
 

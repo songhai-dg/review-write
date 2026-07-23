@@ -29,7 +29,7 @@ def repository(configured: str | None) -> str:
 def render(repo: str) -> str:
     url = f"https://github.com/{repo}"
     return (
-        f"请从官方仓库 {url} 安装 ReviewWrite Skill。先确认来源可信并检查是否已有 ReviewWrite；已有版本时报告版本和路径，不得覆盖。再按当前平台的原生 Skill 安装或导入机制执行，并验证 `review-write` 可被发现；平台不支持或权限不足时说明原因后停止。"
+        f"请从官方仓库 {url} 安装审写（ReviewWrite）Skill。先确认来源可信并检查是否已有审写或 ReviewWrite；已有版本时报告版本和路径，不得覆盖。再按当前平台的原生 Skill 安装或导入机制执行，并验证 `reviewwrite` 可被发现；平台不支持或权限不足时说明原因后停止。"
     )
 
 

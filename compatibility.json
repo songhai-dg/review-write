@@ -1,7 +1,14 @@
 {
   "schema_version": 1,
-  "reviewwrite_version": "0.3.0",
+  "reviewwrite_version": "0.4.0",
   "format": "agentskills.io-compatible",
+  "skill_id": "reviewwrite",
+  "display_name": "审写 · ReviewWrite",
+  "natural_language_aliases": [
+    "审写",
+    "ReviewWrite"
+  ],
+  "alias_boundary": "Aliases are natural-language triggers only; only reviewwrite is a technical Skill ID and slash invocation.",
   "maintainer": "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）",
   "checked_at": "2026-07-21",
   "language_support": {
@@ -28,7 +35,7 @@
       "checked_local_version": "0.144.6",
       "user_path": null,
       "project_path": null,
-      "invocation": "$review-write",
+      "invocation": "$reviewwrite; 自然语言：审写 / ReviewWrite",
       "install_mode": "platform-native-or-agent-managed",
       "docs": "https://developers.openai.com/codex/skills"
     },
@@ -37,7 +44,7 @@
       "checked_local_version": "2.1.198",
       "user_path": null,
       "project_path": null,
-      "invocation": "/review-write",
+      "invocation": "/reviewwrite; 自然语言：审写 / ReviewWrite",
       "install_mode": "platform-native-or-agent-managed",
       "note": "Use the current host discovery and installation mechanism; do not infer a path from another client.",
       "docs": "https://code.claude.com/docs/en/skills"
@@ -47,7 +54,7 @@
       "checked_local_version": "local-source-install",
       "user_path": null,
       "project_path": null,
-      "invocation": "/review-write",
+      "invocation": "/reviewwrite; 自然语言：审写 / ReviewWrite",
       "install_mode": "platform-native-or-agent-managed",
       "note": "Use the active profile's native discovery and refresh mechanism.",
       "docs": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/work-with-skills.md"
@@ -87,7 +94,7 @@
       "checked_local_version": null,
       "user_path": "managed by WorkBuddy Skills UI",
       "project_path": "managed by WorkBuddy workspace",
-      "invocation": "/review-write or skill selector",
+      "invocation": "/reviewwrite or skill selector；自然语言：审写 / ReviewWrite",
       "install_mode": "ui-upload",
       "note": "Use the host UI or native skill channel, then verify the skill is visible and loadable.",
       "docs": "https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market"

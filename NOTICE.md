@@ -2,7 +2,7 @@
 
 ## Maintainer
 
-ReviewWrite 由中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）开发维护。
+审写 · ReviewWrite 由中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）开发维护。
 
 ReviewWrite 学习并综合了下列开源项目的公开方法。项目没有把上游仓库作为运行时依赖；上游版本通过 `sources.lock.json` 固定，便于复核、差异分析和后续升级。
 

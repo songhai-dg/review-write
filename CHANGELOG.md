@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - 2026-07-22
+
+- 将唯一技术 Skill ID 从 `review-write` 迁移为 `reviewwrite`，减少调用时输入连字符的摩擦；slash 调用统一为 `/reviewwrite`；
+- 产品显示名统一为“审写 · ReviewWrite”，将“审写”和“ReviewWrite”定义为自然语言简称，而非多份可安装 Skill；
+- 安装器现在检测旧 `review-write` 目录并拒绝并行安装，要求先报告路径、由用户决定迁移或删除，避免重复规则加载；
+- 同步 README、安装提示、平台兼容说明、商场元数据、打包资产、Release 工作流、测试与验证规则。
+
 ## 0.3.0 - 2026-07-22
 
 - 新增 `Office QA` 按需交付质检路由：DOCX/PPTX 默认只读审计，不静默统一字体、不覆盖原件，也不把工具过程写入正文；

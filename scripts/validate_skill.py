@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "SKILL.md",
-    "skills/review-write/SKILL.md",
+    "skills/reviewwrite/SKILL.md",
     "README.md",
     "LICENSE",
     "NOTICE.md",
@@ -61,7 +61,7 @@ def validate() -> list[str]:
         if not skill_text.startswith("---\n"):
             errors.append("SKILL.md 缺少 YAML frontmatter")
         for required_line in (
-            "name: review-write",
+            "name: reviewwrite",
         ):
             if required_line not in skill_text:
                 errors.append(f"SKILL.md 缺少元数据: {required_line}")
@@ -95,7 +95,7 @@ def validate() -> list[str]:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         errors.append(f"安装提示无效: {exc}")
 
-    runtime_skill_path = ROOT / "skills" / "review-write" / "SKILL.md"
+    runtime_skill_path = ROOT / "skills" / "reviewwrite" / "SKILL.md"
     if runtime_skill_path.is_file() and skill_path.is_file():
         runtime_version = re.search(
             r"(?m)^version: ([^\n]+)$", runtime_skill_path.read_text(encoding="utf-8")
@@ -105,6 +105,9 @@ def validate() -> list[str]:
         )
         if not runtime_version or not root_version or runtime_version.group(1) != root_version.group(1):
             errors.append("根目录与运行时 SKILL.md 版本不一致")
+
+        if "natural_language_aliases: [\"审写\", \"ReviewWrite\"]" not in skill_text:
+            errors.append("SKILL.md 缺少审写与 ReviewWrite 的自然语言简称声明")
 
         for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", readme):
             if target.startswith(("http://", "https://", "#")):
@@ -205,6 +208,10 @@ def validate() -> list[str]:
             errors.append("Office QA 必须保持 audit-only 默认边界")
         if set(office_qa.get("formats", [])) != {"docx", "pptx"}:
             errors.append("Office QA 格式声明必须为 docx 与 pptx")
+        if compatibility.get("skill_id") != "reviewwrite":
+            errors.append("技术 Skill ID 必须为 reviewwrite")
+        if set(compatibility.get("natural_language_aliases", [])) != {"审写", "ReviewWrite"}:
+            errors.append("自然语言简称必须为 审写 与 ReviewWrite")
         manifest = json.loads(
             (ROOT / "references" / "fewshots" / "manifest.json").read_text(encoding="utf-8")
         )

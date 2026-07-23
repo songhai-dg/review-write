@@ -43,18 +43,18 @@ jobs:
           python3 scripts/print_install_prompt.py --repo "$GITHUB_REPOSITORY" > dist/install-prompt.txt
           python3 scripts/render_release_notes.py > dist/release-notes.md
           cd dist
-          sha256sum review-write-*.skill > review-write-${GITHUB_REF_NAME#v}.skill.sha256
+          sha256sum reviewwrite-*.skill > reviewwrite-${GITHUB_REF_NAME#v}.skill.sha256
       - name: Generate artifact attestation
         uses: actions/attest@v4
         with:
-          subject-path: "dist/review-write-*.skill"
+          subject-path: "dist/reviewwrite-*.skill"
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            dist/review-write-*.skill \
-            dist/review-write-${GITHUB_REF_NAME#v}.skill.sha256 \
+            dist/reviewwrite-*.skill \
+            dist/reviewwrite-${GITHUB_REF_NAME#v}.skill.sha256 \
             dist/install-prompt.txt \
             --verify-tag \
             --notes-file dist/release-notes.md

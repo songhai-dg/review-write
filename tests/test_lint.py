@@ -239,12 +239,12 @@ class ReviewWriteLintTests(unittest.TestCase):
         import zipfile
 
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "review-write.skill"
+            output = Path(directory) / "reviewwrite.skill"
             package_skill.build(output)
             with zipfile.ZipFile(output) as archive:
                 names = set(archive.namelist())
             self.assertIn("SKILL.md", names)
-            self.assertNotIn("skills/review-write/SKILL.md", names)
+            self.assertNotIn("skills/reviewwrite/SKILL.md", names)
             self.assertIn("scripts/reviewwrite_lint.py", names)
             self.assertIn("scripts/office_qa.py", names)
             self.assertIn("references/leakage.md", names)
@@ -335,11 +335,11 @@ class ReviewWriteLintTests(unittest.TestCase):
         openclaw = install_skill.plan_for("openclaw", "user", project_root)
         workbuddy = install_skill.plan_for("workbuddy", "user", project_root)
 
-        self.assertTrue(codex.destination.endswith(".agents/skills/review-write"))
-        self.assertTrue(claude.destination.endswith(".claude/skills/review-write"))
-        self.assertTrue(hermes.destination.endswith(".hermes/skills/productivity/review-write"))
-        self.assertTrue(gemini.destination.endswith(".gemini/skills/review-write"))
-        self.assertTrue(copilot.destination.endswith(".github/skills/review-write"))
+        self.assertTrue(codex.destination.endswith(".agents/skills/reviewwrite"))
+        self.assertTrue(claude.destination.endswith(".claude/skills/reviewwrite"))
+        self.assertTrue(hermes.destination.endswith(".hermes/skills/productivity/reviewwrite"))
+        self.assertTrue(gemini.destination.endswith(".gemini/skills/reviewwrite"))
+        self.assertTrue(copilot.destination.endswith(".github/skills/reviewwrite"))
         self.assertIn("--global", openclaw.command or [])
         self.assertEqual(openclaw.completion, "installed-after-apply")
         self.assertEqual(workbuddy.action, "package-for-ui")
@@ -412,7 +412,7 @@ class ReviewWriteLintTests(unittest.TestCase):
         import tempfile
 
         with tempfile.TemporaryDirectory() as directory:
-            destination = Path(directory) / "skills" / "review-write"
+            destination = Path(directory) / "skills" / "reviewwrite"
             self.assertIsNone(install_skill._copy_bundle(destination))
             backup = install_skill._copy_bundle(destination, upgrade=True)
             self.assertIsNotNone(backup)
@@ -430,13 +430,23 @@ class ReviewWriteLintTests(unittest.TestCase):
     def test_install_prompt_uses_official_https_repository(self) -> None:
         prompt = print_install_prompt.render("ecoaitech/review-write")
         self.assertIn("https://github.com/ecoaitech/review-write", prompt)
-        self.assertIn("安装 ReviewWrite Skill", prompt)
+        self.assertIn("安装审写（ReviewWrite）Skill", prompt)
         self.assertIn("确认来源可信", prompt)
         self.assertIn("不得覆盖", prompt)
-        self.assertIn("`review-write` 可被发现", prompt)
+        self.assertIn("`reviewwrite` 可被发现", prompt)
         self.assertNotIn("启用", prompt)
         self.assertNotIn("--target TARGET", prompt)
         self.assertNotIn("<OFFICIAL_REPOSITORY_URL>", prompt)
+
+    def test_legacy_skill_directory_is_not_installed_in_parallel(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "skills" / "reviewwrite"
+            legacy = destination.with_name("review-write")
+            legacy.mkdir(parents=True)
+            with self.assertRaisesRegex(FileExistsError, "旧标识"):
+                install_skill._copy_bundle(destination)
 
     def test_install_prompt_is_consistent_across_public_documents(self) -> None:
         prompt = print_install_prompt.render(print_install_prompt.repository(None))
@@ -449,7 +459,7 @@ class ReviewWriteLintTests(unittest.TestCase):
 
     def test_release_notes_are_versioned_and_actionable(self) -> None:
         notes = render_release_notes.render("0.2.0")
-        self.assertIn("# ReviewWrite v0.2.0", notes)
+        self.assertIn("# 审写 · ReviewWrite v0.2.0", notes)
         self.assertIn("## 本版更新", notes)
         self.assertIn("## 安装与安全", notes)
         self.assertIn("SHA-256", notes)

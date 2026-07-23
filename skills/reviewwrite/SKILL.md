@@ -1,19 +1,29 @@
 ---
-name: review-write
-description: Review and rewrite Chinese or English professional prose, with optional audit-only DOCX/PPTX font and render QA, while preserving facts, citations, qualifications, intent, author voice, and source Office files.
-version: 0.3.0
+name: reviewwrite
+description: 审写 · ReviewWrite：review and rewrite Chinese or English professional prose, with optional audit-only DOCX/PPTX font and render QA, while preserving facts, citations, qualifications, intent, author voice, and source Office files.
+version: 0.4.0
 license: MIT
 metadata:
   hermes:
     tags: [writing, review, rewrite, chinese, academic, policy]
     category: productivity
   reviewwrite:
+    skill_id: reviewwrite
+    display_name: "审写 · ReviewWrite"
+    natural_language_aliases: ["审写", "ReviewWrite"]
+    alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
 ---
 
-# ReviewWrite
+# 审写 · ReviewWrite
 
 先审后写。根据用户要求和原文判断语言、读者、目的、体裁、证据和可修改范围，不要把某一种体裁、语言或“像人”规则强套到所有文本。
+
+## 名称与调用
+
+- 唯一技术 Skill ID 是 `reviewwrite`；支持 slash 调用的平台应使用 `/reviewwrite`。
+- “审写”和“ReviewWrite”仅是自然语言简称，不是第二份可安装 Skill，也不保证成为 slash alias。
+- 不要同时安装旧 `review-write` 与 `reviewwrite`；检测到旧目录时先报告路径并由用户决定迁移或删除。
 
 ## 硬边界
 

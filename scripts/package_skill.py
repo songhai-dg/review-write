@@ -10,7 +10,8 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.0"
+VERSION = "0.4.0"
+SKILL_ID = "reviewwrite"
 
 
 def bundle_files() -> list[Path]:
@@ -42,7 +43,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=ROOT / "dist" / f"review-write-{VERSION}.skill",
+        default=ROOT / "dist" / f"{SKILL_ID}-{VERSION}.skill",
     )
     args = parser.parse_args(argv)
     output = build(args.output.resolve())

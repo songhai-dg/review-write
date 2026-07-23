@@ -1,10 +1,12 @@
-# ReviewWrite Brand
+# 审写 · ReviewWrite Brand
 
 开发机构：中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）。
 
 ## Positioning
 
-ReviewWrite 不是 humanizer，也不是 AI detector。它是面向 AI Agent 的专业写作质量控制层：先审后写，保护事实，隔离过程，按体裁交付。
+审写 · ReviewWrite 不是 humanizer，也不是 AI detector。它是面向 AI Agent 的专业写作质量控制层：先审后写，保护事实，隔离过程，按体裁交付。
+
+名称分层：产品名为“审写 · ReviewWrite”，唯一技术 Skill ID 为 `reviewwrite`，自然语言简称为“审写”和“ReviewWrite”。简称不作为第二份可安装 Skill，不制造跨平台不一致的 slash alias。
 
 核心品牌句：
 

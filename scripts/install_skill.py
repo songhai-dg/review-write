@@ -20,7 +20,8 @@ import package_skill
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_NAME = "review-write"
+SKILL_NAME = "reviewwrite"
+LEGACY_SKILL_NAME = "review-write"
 COPY_TARGETS = {"codex", "claude", "hermes", "gemini", "copilot", "generic"}
 TARGET_CATALOG = (
     {
@@ -145,7 +146,7 @@ def plan_for(
             note="使用 OpenClaw 官方本地目录安装；不会使用 .skill 压缩包。",
         )
     if target == "workbuddy":
-        output = ROOT / "dist" / f"review-write-{package_skill.VERSION}-workbuddy.zip"
+        output = ROOT / "dist" / f"{SKILL_NAME}-{package_skill.VERSION}-workbuddy.zip"
         return InstallPlan(
             target=target,
             scope=scope,
@@ -160,11 +161,16 @@ def plan_for(
 
 def _copy_bundle(destination: Path, upgrade: bool = False) -> Path | None:
     backup: Path | None = None
+    legacy_destination = destination.with_name(LEGACY_SKILL_NAME)
+    if legacy_destination.exists() and not destination.exists():
+        raise FileExistsError(
+            f"检测到旧标识，拒绝并行安装: {legacy_destination}；请先报告路径并由用户决定迁移或删除。"
+        )
     if destination.exists() or destination.is_symlink():
         if not upgrade:
             raise FileExistsError(f"目标已存在，未覆盖: {destination}")
         skill_file = destination / "SKILL.md"
-        if not skill_file.is_file() or "name: review-write" not in skill_file.read_text(
+        if not skill_file.is_file() or "name: reviewwrite" not in skill_file.read_text(
             encoding="utf-8"
         ):
             raise ValueError(f"目标不是可识别的 ReviewWrite，拒绝升级: {destination}")
