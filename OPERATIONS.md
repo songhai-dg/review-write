@@ -42,6 +42,9 @@
 - `scripts/bump_version.py`：跨文件同步版本，默认只预览；
 - `.github/workflows/ci.yml`：每次 PR 的硬门；
 - `.github/workflows/release.yml`：tag 后构建、校验、签名和发布。
+- `.github/workflows/mirror-gitee.yml`：将 GitHub 的 `main` 和正式版本标签推送到 Gitee；Gitee 不作为第二个开发源，也不使用强制覆盖。
+
+首次启用 Gitee 镜像时，先创建空的公开仓库 `songhai-dg/review-write`，再在 GitHub Actions secrets 中添加 `GITEE_USERNAME` 和 `GITEE_TOKEN`。先手动运行一次 `Mirror to Gitee` 验证仓库权限，再依赖后续 push/tag 自动同步。Release 附件仍以 GitHub 为官方校验源，需要在 SkillHub 上架时上传同一份 `.skill` 与 `.sha256`。
 
 自动任务应调用这些固定入口，而不是每次自行发明发布流程。
 
