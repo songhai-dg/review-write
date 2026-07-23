@@ -33,15 +33,13 @@ jobs:
 
       - name: Configure a temporary Gitee credential helper
         env:
-          GITEE_USERNAME: ${{ secrets.GITEE_USERNAME }}
           # Accept the existing GITEE secret and the documented GITEE_TOKEN name.
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN || secrets.GITEE }}
         run: |
-          test -n "$GITEE_USERNAME" || { echo "Missing GITEE_USERNAME secret" >&2; exit 1; }
           test -n "$GITEE_TOKEN" || { echo "Missing GITEE_TOKEN secret" >&2; exit 1; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local credential.helper '!f() { echo "username=${GITEE_USERNAME}"; echo "password=${GITEE_TOKEN}"; }; f'
+          git config --local credential.helper '!f() { echo "username=oauth2"; echo "password=${GITEE_TOKEN}"; }; f'
           git remote add gitee "https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
 
       - name: Push main to Gitee
