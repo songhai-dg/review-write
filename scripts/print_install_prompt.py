@@ -33,7 +33,7 @@ def render(repo: str) -> str:
     mirror = ""
     if repo == OFFICIAL_REPOSITORY:
         mirror = (
-            f"如当前网络无法访问 GitHub，可使用已同步的 Gitee 镜像 {DOMESTIC_MIRROR_URL}；"
+            f"默认安装最新正式 Release，不直接跟踪 `main`；如当前网络无法访问 GitHub，可使用已同步的 Gitee 镜像 {DOMESTIC_MIRROR_URL}；"
             "无论使用哪个来源，都先核对目标版本标签和提交，Release 安装包的 SHA-256 以 GitHub 官方 Release 为准。"
         )
     return (
