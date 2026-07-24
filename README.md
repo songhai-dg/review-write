@@ -34,7 +34,7 @@
 复制下面代码块中的内容：
 
 ```text
-请从官方仓库 https://github.com/songhai-dg/review-write 安装 ReviewWrite Skill；如果当前智能体已经安装，不要重复安装，也不要搜索或替换成名称相近的其他技能。请使用所在平台自己的 Skill 安装或导入机制；如果仓库已在当前目录，直接以当前目录为安装来源。平台不支持、没有权限或无法访问来源时，说明限制并停止。
+请从官方仓库 https://github.com/songhai-dg/review-write 安装 ReviewWrite Skill；如当前网络无法访问 GitHub，使用同步镜像 https://gitee.com/cufe01/songhai-dg。如果当前智能体已经安装，不要重复安装，也不要搜索或替换成名称相近的其他技能。请使用所在平台自己的 Skill 安装或导入机制；如果仓库已在当前目录，直接以当前目录为安装来源。平台不支持、没有权限或无法访问来源时，说明限制并停止。
 ```
 
 它主要解决：
@@ -182,7 +182,7 @@ For AI writing signals, common humanizer risks, and ReviewWrite's writing-before
 Copy the text in the code block:
 
 ```text
-Install ReviewWrite from the canonical repository https://github.com/songhai-dg/review-write. If the current agent already has it, do not install it again or search for a similarly named replacement. Use the current platform's native Skill installation or import flow; if the repository is already in the current directory, use that directory as the installation source. If the platform is unsupported, permissions are unavailable, or the source cannot be reached, state the limitation and stop.
+Install ReviewWrite from the canonical repository https://github.com/songhai-dg/review-write. If GitHub is unavailable on the current network, use the synchronized Gitee mirror https://gitee.com/cufe01/songhai-dg. If the current agent already has it, do not install it again or search for a similarly named replacement. Use the current platform's native Skill installation or import flow; if the repository is already in the current directory, use that directory as the installation source. If the platform is unsupported, permissions are unavailable, or the source cannot be reached, state the limitation and stop.
 ```
 
 It is not an AI-detector bypass tool; it is delivery-quality control for professional writing.
