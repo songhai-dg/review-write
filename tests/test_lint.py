@@ -59,6 +59,53 @@ class ReviewWriteLintTests(unittest.TestCase):
         revised = "评估重点不应是摘要速度，而应是是否保留退款期限。"
         self.assertEqual(reviewwrite_lint.lint_text(revised), [])
 
+    def test_technical_commentary_detects_stacked_signals(self) -> None:
+        draft = (
+            "这是一个 34.66B 参数的稀疏 MoE 模型，每个 token 激活约 3B 参数。"
+            "这个细节很关键，端侧推理真正卡住的不是参数总量，而是每次生成 token 要搬多少权重。"
+            "这比单次跑分更重要，因为大多数用户并不关心模型听起来有多大，"
+            "他们关心电脑能不能跑、手机能不能装。端侧 AI 未必从旗舰 GPU 普及，"
+            "而更可能从内存够、软件通、模型拆得聪明的设备开始。"
+        )
+        findings = reviewwrite_lint.lint_text(
+            draft, profiles=["technical-commentary"]
+        )
+        rule_ids = {item.rule_id for item in findings}
+        self.assertTrue(
+            {
+                "RW-W-209",
+                "RW-W-210",
+                "RW-W-211",
+                "RW-W-212",
+            } <= rule_ids
+        )
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings), 0)
+
+    def test_one_technical_contrast_is_not_a_composite_signal(self) -> None:
+        text = "端侧推理关注的不是文件大小，而是目标设备上的内存带宽。"
+        findings = reviewwrite_lint.lint_text(
+            text, profiles=["technical-commentary"]
+        )
+        self.assertNotIn("RW-W-209", {item.rule_id for item in findings})
+        self.assertNotIn("RW-W-210", {item.rule_id for item in findings})
+
+    def test_repeated_sentence_initial_enumeration_is_a_contextual_signal(self) -> None:
+        draft = (
+            "第一，模型要足够小。\n"
+            "第二，工具链要足够稳定。\n"
+            "第三，设备还要有足够的内存。"
+        )
+        findings = reviewwrite_lint.lint_text(draft, profiles=["public-article"])
+        self.assertIn("RW-W-213", {item.rule_id for item in findings})
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings), 0)
+
+    def test_formal_document_profile_does_not_trigger_enumeration_signal(self) -> None:
+        draft = "第一，明确责任主体。\n第二，规定办理时限。\n第三，保留例外情形。"
+        findings = reviewwrite_lint.lint_text(
+            draft, profiles=["official-document"]
+        )
+        self.assertNotIn("RW-W-213", {item.rule_id for item in findings})
+
     def test_simulation_inputs_fail_and_outputs_pass_without_fact_loss(self) -> None:
         simulation_root = ROOT / "examples" / "simulation"
         manifest = json.loads(

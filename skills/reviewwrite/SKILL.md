@@ -1,7 +1,7 @@
 ---
 name: reviewwrite
 description: 审写 · ReviewWrite：review and rewrite Chinese or English professional prose, with optional audit-only DOCX/PPTX font and render QA, while preserving facts, citations, qualifications, intent, author voice, and source Office files.
-version: 0.4.0
+version: 0.5.1
 license: MIT
 metadata:
   hermes:
@@ -41,6 +41,10 @@ metadata:
 5. 用户提供 `.docx`/`.pptx` 或要求检查乱码、字体混乱、中文/英文回退、截断、换行时，完成正文审写后按 [Office QA](references/office-qa.md) 执行只读审计。默认不改文件：确认模板/profile、运行 `python3 scripts/office_qa.py <file> --format json`、在可用时渲染并逐页检查。没有 profile、目标字体清单或视觉检查时，不得声称字体已合规或所有设备均可正常显示。
 
 遇到“真正值得、真正改变、全面提升、赋能、助力、具有重要意义”“换句话说”“答案很可能不是”“这也是最危险的地方”等表达，不要机械删词；先检查是否有明确标准、主体、动作、对象、范围或证据。对公式化转折，只有其后确有新的释义、风险判断或证据时保留；否则直接写判断、因果或条件。有正式定义、对比或统计依据就保留。
+
+技术解读或产业评论中，如果短文本同时出现多次二元反转、重要性宣告、用户群体泛化和无条件预测，将其视为“叠加式模板信号”而不是作者身份判断。需要时声明 `--genre technical-commentary` 或读取对应体裁包；对参数量、激活量、内存、速度和行业预测分别核对统计口径、来源、测量对象和适用条件。单个“不是……而是……”或“更重要”不应被机械删除。
+
+如果公众号或技术评论在三个以上句段的句首反复使用“第一、第二、第三/首先、其次、最后”，检查它是否只是编号推进而没有改变段落功能。把事实、证据、判断和行动重新分开，必要时使用小标题、场景、指标或限制条件；政策条文、研究方法和操作步骤中的规范编号可以保留。该信号对应 `RW-W-213`，只作警告，不判断作者是否使用了 AI。
 
 ## 输出边界
 

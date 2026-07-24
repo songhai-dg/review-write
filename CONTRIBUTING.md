@@ -35,6 +35,8 @@
 
 ## 提交前检查
 
+每次能力、规则、few-shot 或测试变更都必须新增对应的 `CHANGELOG.md` 版本条目，说明改了什么、保护了什么、如何验证；版本同步器会拒绝没有日志条目的版本升级。
+
 ```bash
 python3 scripts/validate_skill.py
 python3 -m unittest discover -s tests -v

@@ -25,7 +25,7 @@ from typing import Any, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.4.0"
+USER_AGENT = "ReviewWrite-Updater/0.5.1"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 
