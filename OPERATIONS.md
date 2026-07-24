@@ -42,6 +42,8 @@
 - `scripts/bump_version.py`：跨文件同步版本，默认只预览；
 - `.github/workflows/ci.yml`：每次 PR 的硬门；
 - `.github/workflows/release.yml`：tag 后构建、校验、签名和发布。
+- `scripts/build_distribution_kit.py`：从同一版本生成各平台目录提交包、安装指令和宣传素材；不直接猜测第三方平台接口。
+- `distribution/README.md`：分发包的来源、镜像和账号边界。
 - `.github/workflows/mirror-gitee.yml`：将 GitHub 的 `main` 和正式版本标签推送到 Gitee；Gitee 不作为第二个开发源，也不使用强制覆盖。
 
 首次启用 Gitee 镜像时，目标仓库为 `cufe01/songhai-dg`（页面显示名为 `haisong2/review-write`），再在 GitHub Actions secrets 中添加 Gitee 令牌（推荐名称 `GITEE_TOKEN`，工作流兼容现有的 `GITEE`）。先手动运行一次 `Mirror to Gitee` 验证仓库权限，再依赖后续 push/tag 自动同步。Release 附件仍以 GitHub 为官方校验源，需要在 SkillHub 上架时上传同一份 `.skill` 与 `.sha256`。
