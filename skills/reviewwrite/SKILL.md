@@ -1,7 +1,7 @@
 ---
 name: reviewwrite
 description: 审写 · ReviewWrite：review and rewrite Chinese or English professional prose, with optional audit-only DOCX/PPTX font and render QA, while preserving facts, citations, qualifications, intent, author voice, and source Office files.
-version: 0.6.0
+version: 0.5.1
 license: MIT
 metadata:
   hermes:
