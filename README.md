@@ -39,6 +39,8 @@
 
 国内 SkillHub 入口：[审写 · ReviewWrite](https://skillhub.cn/team-skills/zcst-review-write)。
 
+正式版本会自动生成一份分发包，统一提供 GitHub、Gitee、SkillHub 和其他 Agent Skills 目录所需的安装指令、版本信息与宣传文案，避免各平台出现不同版本。分发包说明见 [distribution/README.md](distribution/README.md)。
+
 它主要解决：
 
 - 提示词、推理过程、工具调用和编辑指令混入正式正文；
