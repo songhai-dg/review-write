@@ -477,20 +477,22 @@ class ReviewWriteLintTests(unittest.TestCase):
     def test_install_prompt_uses_official_https_repository(self) -> None:
         prompt = print_install_prompt.render("ecoaitech/review-write")
         self.assertIn("https://github.com/ecoaitech/review-write", prompt)
-        self.assertIn("安装审写（ReviewWrite）Skill", prompt)
-        self.assertIn("确认来源可信", prompt)
-        self.assertIn("不得覆盖", prompt)
-        self.assertIn("`reviewwrite` 可被发现", prompt)
+        self.assertIn("安装 ReviewWrite Skill", prompt)
+        self.assertIn("已经安装，不要重复安装", prompt)
+        self.assertIn("所在平台自己的 Skill 安装或导入机制", prompt)
+        self.assertIn("当前目录", prompt)
         self.assertNotIn("启用", prompt)
         self.assertNotIn("--target TARGET", prompt)
         self.assertNotIn("<OFFICIAL_REPOSITORY_URL>", prompt)
 
-    def test_official_install_prompt_includes_gitee_fallback(self) -> None:
+    def test_official_install_prompt_leaves_platform_decisions_to_host(self) -> None:
         prompt = print_install_prompt.render("songhai-dg/review-write")
         self.assertIn("https://github.com/songhai-dg/review-write", prompt)
-        self.assertIn("https://gitee.com/cufe01/songhai-dg", prompt)
-        self.assertIn("版本标签和提交", prompt)
-        self.assertIn("SHA-256", prompt)
+        self.assertIn("不要搜索或替换成名称相近的其他技能", prompt)
+        self.assertIn("所在平台自己的 Skill 安装或导入机制", prompt)
+        self.assertNotIn("Gitee", prompt)
+        self.assertNotIn("SHA-256", prompt)
+        self.assertNotIn("Release", prompt)
 
     def test_legacy_skill_directory_is_not_installed_in_parallel(self) -> None:
         import tempfile
