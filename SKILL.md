@@ -77,6 +77,19 @@ platforms: [linux, macos, windows]
 
 如果模式、事实纠错权限，或改动会改变法律、政策、学术结论且无法保守判断，先提出最小澄清问题；其他缺失信息采用最小假设，不为了填字段而编造契约。
 
+## 快速开始与输入处理
+
+直接粘贴正文即可。体裁、读者和语气未说明时，先按原文语域保守处理；用户不需要先填写表单，也不需要知道内部模式名。
+
+- **只要成稿**：`使用 ReviewWrite 改写下面文字，只输出可直接发布的正文；保留数字、引用、专名和限定条件。`
+- **先评审再改写**：`使用 ReviewWrite 评审并修改下面材料。先说明问题，再给修改稿；不得改变事实、政策口径、数字和责任边界。`
+- **减少模板化表达**：`使用 ReviewWrite 优化下面文案。保留事实和作者语气，清理空泛套话、聊天式收尾和编辑过程。`
+- **只审计 Office 文件**：`使用 ReviewWrite 审计这份 Word/PPT 的字体与版式风险，只输出问题清单，不修改原文件。`
+
+最小输入是待处理的文字或文件。没有体裁、读者或语气信息时，根据原文判断并缩小修改范围；事实、引用、政策、法律或学术结论可能被改变时，只询问一个最小澄清问题。无法读取文件或核验关键事实时，说明缺少的内容或标为待核验，不假装完成，也不补造事实。
+
+更完整的常见任务和问答见 [references/quickstart.md](references/quickstart.md)。
+
 ## 按需读取
 
 开始工作前根据观察到的问题读取最少参考文件：
@@ -89,6 +102,7 @@ platforms: [linux, macos, windows]
 - 中文自然表达信号：[references/style-signals.md](references/style-signals.md)
 - 平台安装和调用差异：[references/platforms.md](references/platforms.md)
 - 可选更新策略：[references/update-policy.md](references/update-policy.md)
+- 新手任务、最小输入和常见问答：[references/quickstart.md](references/quickstart.md)
 - DOCX/PPTX 字体、目标环境和渲染门禁：[references/office-qa.md](references/office-qa.md)，必要时再读取 [references/font-profiles.md](references/font-profiles.md) 与 [references/office-integrations.md](references/office-integrations.md)；
 - AI 写作痕迹、不同模型常见风格与 humanizer 边界：[references/ai-writing-signals.md](references/ai-writing-signals.md)；当用户要求减少 AI 味、提高初稿自然度、比较 humanizer 或分析模型文风时读取；
 - 对应体裁：`references/genre-packs/` 下的一个主要体裁包；只有混合体裁才读取两个。

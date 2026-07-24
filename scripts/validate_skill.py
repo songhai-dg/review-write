@@ -33,6 +33,7 @@ REQUIRED_FILES = (
     "references/language-packs/en.md",
     "references/platforms.md",
     "references/update-policy.md",
+    "references/quickstart.md",
     "references/office-qa.md",
     "references/font-profiles.md",
     "references/office-integrations.md",

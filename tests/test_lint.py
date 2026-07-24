@@ -296,6 +296,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             self.assertIn("scripts/office_qa.py", names)
             self.assertIn("references/leakage.md", names)
             self.assertIn("references/office-qa.md", names)
+            self.assertIn("references/quickstart.md", names)
             self.assertIn("examples/office-qa/font-profile.example.json", names)
             self.assertIn("references/fewshots/manifest.json", names)
             self.assertIn("agents/openai.yaml", names)
