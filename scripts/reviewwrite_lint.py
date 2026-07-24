@@ -303,6 +303,12 @@ TECHNICAL_NUMBER = re.compile(
     r"\d+(?:\.\d+)?\s*(?:B|M|G)参数)",
     re.IGNORECASE,
 )
+ENUMERATION_MARKERS = re.compile(
+    r"(?:第一|第二|第三|第四|第五|首先|其次|再次|最后|"
+    r"first|second|third|fourth|fifth|firstly|secondly|thirdly|finally)"
+    r"(?=[、，,.:：．.\s])",
+    re.IGNORECASE,
+)
 
 
 def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
@@ -316,15 +322,20 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
     legitimate contrast in a policy or academic text from being penalized while
     catching the short, high-density pattern found in AI-generated tech posts.
     """
-    if not TECHNICAL_TERMS.search(text):
-        return []
     if not ({"public-article", "technical-commentary"} & profiles):
         return []
 
+    is_technical = bool(TECHNICAL_TERMS.search(text))
     contrasts = list(COMPOSITE_CONTRASTS.finditer(text))
     importance = list(IMPORTANCE_SIGNALS.finditer(text))
     audience = list(AUDIENCE_SIGNALS.finditer(text))
     forecasts = list(FORECAST_SIGNALS.finditer(text))
+    enum_markers = [
+        match
+        for match in ENUMERATION_MARKERS.finditer(text)
+        if not text[: match.start()].rstrip()
+        or text[: match.start()].rstrip()[-1] in "。！？\n"
+    ]
     findings: list[Finding] = []
 
     def add(
@@ -346,33 +357,40 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
             )
         )
 
-    if len(contrasts) >= 2:
+    if is_technical and len(contrasts) >= 2:
         add(
             "RW-W-209",
             "stacked-formulaic-signal",
             "技术评论中短距离内连续出现多个二元反转；单个反转可以有功能，叠加时容易形成模板节奏。",
             contrasts[0],
         )
-    if importance and contrasts:
+    if is_technical and importance and contrasts:
         add(
             "RW-W-210",
             "empty-importance-stacking",
             "重要性提示与二元反转或总结判断叠加，但没有增加可验证信息；建议直接写机制、指标或条件。",
             _first_match(sorted(importance + contrasts, key=lambda item: item.start())) or importance[0],
         )
-    if audience and forecasts:
+    if is_technical and audience and forecasts:
         add(
             "RW-W-211",
             "unsupported-audience-generalization",
             "文本把用户群体、设备需求和行业方向连续概括；请补充样本、场景或适用范围。",
             _first_match(sorted(audience + forecasts, key=lambda item: item.start())) or audience[0],
         )
-    if TECHNICAL_NUMBER.search(text) and (contrasts or forecasts):
+    if is_technical and TECHNICAL_NUMBER.search(text) and (contrasts or forecasts):
         add(
             "RW-W-212",
             "technical-claim-scope",
             "技术数字、瓶颈或预测需要核对统计口径、测量对象、来源和适用条件；不要用流畅的结论替代技术限定。",
             TECHNICAL_NUMBER.search(text) or contrasts[0],
+        )
+    if len(enum_markers) >= 3:
+        add(
+            "RW-W-213",
+            "mechanical-enumeration",
+            f"短文本内出现 {len(enum_markers)} 个句首排序标记；如果每段都用“第一/第二/第三”推进，文章可能只有编号变化而没有论证或语气变化。",
+            enum_markers[0],
         )
     return findings
 

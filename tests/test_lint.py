@@ -89,6 +89,23 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertNotIn("RW-W-209", {item.rule_id for item in findings})
         self.assertNotIn("RW-W-210", {item.rule_id for item in findings})
 
+    def test_repeated_sentence_initial_enumeration_is_a_contextual_signal(self) -> None:
+        draft = (
+            "第一，模型要足够小。\n"
+            "第二，工具链要足够稳定。\n"
+            "第三，设备还要有足够的内存。"
+        )
+        findings = reviewwrite_lint.lint_text(draft, profiles=["public-article"])
+        self.assertIn("RW-W-213", {item.rule_id for item in findings})
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings), 0)
+
+    def test_formal_document_profile_does_not_trigger_enumeration_signal(self) -> None:
+        draft = "第一，明确责任主体。\n第二，规定办理时限。\n第三，保留例外情形。"
+        findings = reviewwrite_lint.lint_text(
+            draft, profiles=["official-document"]
+        )
+        self.assertNotIn("RW-W-213", {item.rule_id for item in findings})
+
     def test_simulation_inputs_fail_and_outputs_pass_without_fact_loss(self) -> None:
         simulation_root = ROOT / "examples" / "simulation"
         manifest = json.loads(

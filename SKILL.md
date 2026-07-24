@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.5.0
+version: 0.6.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -173,6 +173,7 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 - 强化词、空泛价值判断、无主体动作、公式化转折/悬念和重复总结是否有具体标准或证据；
 - 短距离内是否叠加二元反转、重要性宣告、用户群体泛化和无条件预测；技术评论中的组合信号应作为警告，不应据此断言作者身份；
 - 技术数字、因果判断和行业预测是否有口径、对象、来源、适用范围和限制条件；
+- 公众号或技术评论是否在多个句段重复使用“第一、第二、第三/首先、其次、最后”，导致段落功能和语气没有变化；正式条文、方法步骤和清单结构可保留；
 - 作者声音是否被通用模型口吻覆盖；
 - 正式正文是否混入内部过程。
 

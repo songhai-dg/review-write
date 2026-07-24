@@ -12,6 +12,7 @@ The reader has limited time and may not share the author's background. The artic
 4. Paragraphs move the argument or narrative forward.
 5. The ending offers a real implication, not a generic elevation of meaning.
 6. Links, quotes and attributed facts are verifiable.
+7. Avoid letting the whole article advance through “First, Second, Third”; each paragraph should have a distinct function such as scene, mechanism, evidence, limitation, or judgment.
 
 ## Voice
 
