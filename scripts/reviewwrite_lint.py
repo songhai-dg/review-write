@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """ReviewWrite deterministic preflight for public-facing prose.
 
-The linter catches likely prompt, reasoning, workflow, editor, and chat residue.
-It does not estimate whether text was AI-generated and does not replace semantic
-or citation review.
+The linter catches likely prompt, reasoning, workflow, editor, and chat residue,
+plus a small set of contextual, composite signals for technical commentary. It
+does not estimate whether text was AI-generated and does not replace semantic or
+citation review.
 """
 
 from __future__ import annotations
@@ -269,6 +270,113 @@ RULES: tuple[Rule, ...] = (
 )
 
 
+# These are intentionally interaction rules rather than a larger forbidden-word
+# list.  A single contrast or emphasis phrase can be useful; the signal appears
+# when several of them are packed into a short technical argument.
+TECHNICAL_TERMS = re.compile(
+    r"(?:模型|参数|token|MoE|GPU|端侧|推理|内存|权重|芯片|算子|量化|带宽|"
+    r"model|parameter|inference|memory|weights?|kernel|quantiz|bandwidth)",
+    re.IGNORECASE,
+)
+COMPOSITE_CONTRASTS = re.compile(
+    r"(?:不是[^。！？\n]{1,80}而是|不只是[^。！？\n]{1,80}更是|"
+    r"未必[^。！？\n]{1,80}而更可能|not\s+(?:just|only)[^.?!\n]{1,90}(?:but|rather))",
+    re.IGNORECASE,
+)
+IMPORTANCE_SIGNALS = re.compile(
+    r"(?:这个细节很关键|这比[^。！？\n]{1,40}更重要|更重要的是|"
+    r"(?:至少)?把方向拨正|真正(?:的)?关键(?:在于)?|the\s+key\s+point\s+is)",
+    re.IGNORECASE,
+)
+AUDIENCE_SIGNALS = re.compile(
+    r"(?:大多数用户|很多用户|普通用户|用户并不关心|"
+    r"most\s+users|many\s+users|ordinary\s+users)",
+    re.IGNORECASE,
+)
+FORECAST_SIGNALS = re.compile(
+    r"(?:未必|更可能|有望|将(?:会)?|可能先|更有可能|"
+    r"may\s+well|more\s+likely|is\s+likely\s+to|will\s+likely)",
+    re.IGNORECASE,
+)
+TECHNICAL_NUMBER = re.compile(
+    r"(?:\b\d+(?:\.\d+)?\s*[BMK]?\b|\b\d+(?:\.\d+)?%|"
+    r"\d+(?:\.\d+)?\s*(?:B|M|G)参数)",
+    re.IGNORECASE,
+)
+
+
+def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
+    return matches[0] if matches else None
+
+
+def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
+    """Find stacked signals without treating individual phrases as errors.
+
+    Composite findings are enabled only for technical prose. This keeps a
+    legitimate contrast in a policy or academic text from being penalized while
+    catching the short, high-density pattern found in AI-generated tech posts.
+    """
+    if not TECHNICAL_TERMS.search(text):
+        return []
+    if not ({"public-article", "technical-commentary"} & profiles):
+        return []
+
+    contrasts = list(COMPOSITE_CONTRASTS.finditer(text))
+    importance = list(IMPORTANCE_SIGNALS.finditer(text))
+    audience = list(AUDIENCE_SIGNALS.finditer(text))
+    forecasts = list(FORECAST_SIGNALS.finditer(text))
+    findings: list[Finding] = []
+
+    def add(
+        rule_id: str,
+        category: str,
+        message: str,
+        match: re.Match[str],
+    ) -> None:
+        line, column = _line_and_column(text, match.start())
+        findings.append(
+            Finding(
+                rule_id=rule_id,
+                severity="warn",
+                category=category,
+                message=message,
+                line=line,
+                column=column,
+                excerpt=_excerpt_for(text, match.start()),
+            )
+        )
+
+    if len(contrasts) >= 2:
+        add(
+            "RW-W-209",
+            "stacked-formulaic-signal",
+            "技术评论中短距离内连续出现多个二元反转；单个反转可以有功能，叠加时容易形成模板节奏。",
+            contrasts[0],
+        )
+    if importance and contrasts:
+        add(
+            "RW-W-210",
+            "empty-importance-stacking",
+            "重要性提示与二元反转或总结判断叠加，但没有增加可验证信息；建议直接写机制、指标或条件。",
+            _first_match(sorted(importance + contrasts, key=lambda item: item.start())) or importance[0],
+        )
+    if audience and forecasts:
+        add(
+            "RW-W-211",
+            "unsupported-audience-generalization",
+            "文本把用户群体、设备需求和行业方向连续概括；请补充样本、场景或适用范围。",
+            _first_match(sorted(audience + forecasts, key=lambda item: item.start())) or audience[0],
+        )
+    if TECHNICAL_NUMBER.search(text) and (contrasts or forecasts):
+        add(
+            "RW-W-212",
+            "technical-claim-scope",
+            "技术数字、瓶颈或预测需要核对统计口径、测量对象、来源和适用条件；不要用流畅的结论替代技术限定。",
+            TECHNICAL_NUMBER.search(text) or contrasts[0],
+        )
+    return findings
+
+
 @dataclass(frozen=True)
 class Exemption:
     """One authorized relaxation of a rule inside a declared genre or context.
@@ -306,6 +414,7 @@ GENRE_PROFILES: frozenset[str] = frozenset(
         "official-document",
         "policy-document",
         "public-article",
+        "technical-commentary",
         "research-report",
         "marketing-copy",
     }
@@ -424,6 +533,7 @@ def lint_text(
                 )
             )
 
+    findings.extend(_composite_findings(text, active))
     return sorted(findings, key=lambda item: (item.line, item.column, item.rule_id))
 
 

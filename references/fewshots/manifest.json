@@ -97,6 +97,19 @@
       "license": "project-original"
     },
     {
+      "id": "zh-technical-commentary-001",
+      "path": "technical-commentary.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "technology-public",
+      "genres": ["technical-commentary", "public-article"],
+      "issue_tags": ["stacked-formulaic-signal", "unsupported-audience", "technical-scope"],
+      "protected_features": ["technical-terms", "qualifiers", "measurement-scope"],
+      "register": "public-facing",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
       "id": "en-process-leakage-001",
       "path": "prompt-leakage.en.md",
       "language": "en",

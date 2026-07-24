@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.4.0
+version: 0.5.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -91,6 +91,7 @@ platforms: [linux, macos, windows]
 - 可选更新策略：[references/update-policy.md](references/update-policy.md)
 - DOCX/PPTX 字体、目标环境和渲染门禁：[references/office-qa.md](references/office-qa.md)，必要时再读取 [references/font-profiles.md](references/font-profiles.md) 与 [references/office-integrations.md](references/office-integrations.md)；
 - 对应体裁：`references/genre-packs/` 下的一个主要体裁包；只有混合体裁才读取两个。
+- 技术解读/产业评论：如果文本同时讨论模型、参数、推理、设备或性能，读取 `references/genre-packs/technical-commentary.md`；它只约束技术口径，不把公众号节奏改成论文腔。
 
 不要一次加载全部体裁包和示例。规则过多会造成互相冲突和过度修改。不要因为文件名匹配就强制采用体裁包；先判断文本实际承担的社会功能，只有确有约束冲突时才读取混合体裁包。
 
@@ -170,6 +171,8 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 - 准确、清楚、具体、连贯；
 - 模板化表达、机械节奏和虚假强调；
 - 强化词、空泛价值判断、无主体动作、公式化转折/悬念和重复总结是否有具体标准或证据；
+- 短距离内是否叠加二元反转、重要性宣告、用户群体泛化和无条件预测；技术评论中的组合信号应作为警告，不应据此断言作者身份；
+- 技术数字、因果判断和行业预测是否有口径、对象、来源、适用范围和限制条件；
 - 作者声音是否被通用模型口吻覆盖；
 - 正式正文是否混入内部过程。
 
