@@ -90,6 +90,7 @@ platforms: [linux, macos, windows]
 - 平台安装和调用差异：[references/platforms.md](references/platforms.md)
 - 可选更新策略：[references/update-policy.md](references/update-policy.md)
 - DOCX/PPTX 字体、目标环境和渲染门禁：[references/office-qa.md](references/office-qa.md)，必要时再读取 [references/font-profiles.md](references/font-profiles.md) 与 [references/office-integrations.md](references/office-integrations.md)；
+- AI 写作痕迹、不同模型常见风格与 humanizer 边界：[references/ai-writing-signals.md](references/ai-writing-signals.md)；当用户要求减少 AI 味、提高初稿自然度、比较 humanizer 或分析模型文风时读取；
 - 对应体裁：`references/genre-packs/` 下的一个主要体裁包；只有混合体裁才读取两个。
 - 技术解读/产业评论：如果文本同时讨论模型、参数、推理、设备或性能，读取 `references/genre-packs/technical-commentary.md`；它只约束技术口径，不把公众号节奏改成论文腔。
 
