@@ -38,7 +38,7 @@
 
 ## Review 轮：4、8、12、16、20
 
-Review 轮默认不改功能、不升版本。独立检查最近四轮：
+Review 轮默认不引入新功能。先独立检查最近四轮：
 
 - 问题证据是否真实；
 - 竞品或研究来源是否为第一手资料，许可证是否清楚；
@@ -49,15 +49,29 @@ Review 轮默认不改功能、不升版本。独立检查最近四轮：
 - 累积指令是否变得过长、冲突或写死；
 - 是否应回退某轮、暂停试验或请求人工判断。
 
-Review 失败时将状态设为 `review-required`，记录 blocker，后续 Scheduled 运行不得继续实现。第 20 轮只给出是否进入 stable 候选的建议，不合并 `main`、不创建 stable tag。
+Review 失败时将状态设为 `review-required`，记录 blocker，后续 Scheduled 运行不得继续实现。
+
+如果最近四轮至少有一个已接受实现，且上述 Review 没有 blocker，可以进入发布评估：
+
+1. 将候选版本提升到下一个 minor，更新 `CHANGELOG.md`，重新运行全部测试。
+2. 连续构建两次 `.skill` 包并比较 SHA-256，确认可复现。
+3. 检查候选分支只包含本试验的受控变更、没有未知文件或凭证；确认 `main` 是候选分支的已知基线，禁止解决不明历史分叉。
+4. 推送唯一候选分支，创建或更新当前 Review 窗口的 Draft PR；一个 Review 窗口最多一个 PR。
+5. PR 内容必须包含四轮证据、竞品/研究来源和许可证、完整测试、相邻体裁回归、版本变化、风险和回滚点。
+6. 将 PR 转为 ready，等待所有必需 CI 通过。任何失败、跳过、取消、超时或无法确认的检查都视为 blocker。
+7. 只能通过 PR 合并 `main`，禁止直接 push `main`。合并后创建与项目版本完全一致的 stable tag，由现有 Release 工作流构建、校验、attestation 和发布。
+8. 发布后验证公开 tag、Release、`.skill`、SHA-256、attestation、安装发现和版本一致性；验证失败立即停止后续轮次并记录回滚方案。
+
+没有已接受实现、可复现构建失败、CI 未全绿、来源或许可证不清、指标退化、远端历史异常、发布权限不足时，本 Review 轮不得合并或发布。
 
 ## 分支、版本与发布
 
 - 全部 20 轮只使用 `bot/pilot-20`。
-- 只维护一个 Draft PR；不要创建每轮分支或每轮 PR。
-- 试验阶段不得推送候选分支、合并 `main`、创建公开 Release 或安装本地候选版本，除非用户另行明确授权。
+- 每个 Review 窗口最多维护一个 Draft PR；五个 Review 窗口最多五个 PR，不创建每轮分支或每轮 PR。
+- 普通轮不得推送、合并或发布；只有 Review 轮通过全部发布门禁后，才可以通过 PR 合并 `main` 并创建 stable Release。
+- 禁止直接 push `main`，禁止绕过 branch protection、CI、attestation 或发布后验证。
 - 有实质实现且全部门禁通过才增加 patch；Review、no-op、来源调查不增加版本。
-- major 永不自动增加；stable minor 必须人工 Review。
+- Review 发布时增加 stable minor；major 永不自动增加。
 
 ## 每轮记录
 

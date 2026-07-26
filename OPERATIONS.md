@@ -42,6 +42,8 @@
 - `automation/pilot-20.md`：单滚动分支、20 轮、每 4 轮 Review 的 Codex Scheduled 试验契约；
 - `automation/pilot-20.json` 与 `automation/pilot-state.json`：试验硬约束和可恢复状态；
 - `references/competitor-evaluation.md`：竞品与研究成果进入实现前的证据、许可和“超越”门禁；
+
+20 轮试验期间只使用 `bot/pilot-20`。普通轮不得发布；第 4、8、12、16、20 轮通过完整 Review、可复现构建和全绿 CI 后，可以通过 PR 合并 `main` 并创建 stable Release。禁止直接 push `main`，任何不确定状态均停止发布。
 - `scripts/bump_version.py`：跨文件同步版本，默认只预览；
 - `.github/workflows/ci.yml`：每次 PR 的硬门；
 - `.github/workflows/release.yml`：tag 后构建、校验、签名和发布。

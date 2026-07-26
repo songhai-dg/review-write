@@ -13,18 +13,24 @@
   "max_action_rounds_per_day": 2,
   "heartbeat_interval_hours": 4,
   "candidate_branch": "bot/pilot-20",
-  "pull_request_mode": "single-draft",
+  "pull_request_mode": "one-draft-per-review-window",
   "version_policy": {
     "accepted_implementation": "patch",
     "review_only": "no-bump",
     "no_evidence": "no-bump",
-    "stable_promotion": "human-review-required"
+    "stable_promotion": "review-gate-qualified"
   },
   "publication_policy": {
-    "pilot_public_release": false,
-    "pilot_push_candidate_branch": false,
-    "pilot_merge_main": false,
-    "pilot_create_stable_tag": false
+    "review_round_may_push_candidate_branch": true,
+    "review_round_may_merge_main": true,
+    "review_round_may_create_stable_release": true,
+    "ordinary_round_may_publish": false,
+    "direct_push_main": false,
+    "require_pull_request": true,
+    "require_green_ci": true,
+    "require_all_release_gates": true,
+    "require_reproducible_package": true,
+    "require_post_release_verification": true
   },
   "change_limits": {
     "max_primary_problems_per_round": 1,
