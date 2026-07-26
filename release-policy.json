@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "repository": "songhai-dg/review-write",
-  "current_version": "0.5.3",
+  "current_version": "0.5.4",
   "channels": {
     "stable": {
       "schedule": "weekly-if-qualified",

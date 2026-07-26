@@ -24,7 +24,7 @@ python3 scripts/office_qa.py path/to/deck.pptx \
   --render required --output-dir /tmp/reviewwrite-preview --format json
 ```
 
-`--render required` 在没有可用渲染器或渲染失败时产生 `blocker`。渲染成功只代表已生成预览，状态仍为 `rendered_pending_inspection`；必须逐页检查 PDF/PNG 后，才能把视觉门禁记为通过。
+`--render required` 在没有可用渲染器、渲染失败或尚未人工确认时产生 `blocker`。逐页检查 PDF/PNG 后，调用者可显式追加 `--confirm-visual-inspection`，将视觉门禁记为通过；仅生成预览不会自动通过。
 
 ## 审计内容
 

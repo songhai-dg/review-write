@@ -39,6 +39,9 @@
 
 - `automation/daily-evolution.md`：每日自动任务的固定契约；
 - `automation/weekly-promotion.md`：每周稳定版候选契约；
+- `automation/pilot-20.md`：单滚动分支、20 轮、每 4 轮 Review 的 Codex Scheduled 试验契约；
+- `automation/pilot-20.json` 与 `automation/pilot-state.json`：试验硬约束和可恢复状态；
+- `references/competitor-evaluation.md`：竞品与研究成果进入实现前的证据、许可和“超越”门禁；
 - `scripts/bump_version.py`：跨文件同步版本，默认只预览；
 - `.github/workflows/ci.yml`：每次 PR 的硬门；
 - `.github/workflows/release.yml`：tag 后构建、校验、签名和发布。

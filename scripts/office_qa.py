@@ -49,12 +49,13 @@ def element_text(element: ET.Element) -> str:
     return "".join(element.itertext()).strip()
 
 
-def script_for(text: str) -> str | None:
+def scripts_for(text: str) -> tuple[str, ...]:
+    scripts: list[str] = []
     if CJK_RE.search(text):
-        return "eastAsia"
+        scripts.append("eastAsia")
     if LATIN_RE.search(text):
-        return "latin"
-    return None
+        scripts.append("latin")
+    return tuple(scripts)
 
 
 def normalize_font(value: str | None) -> str | None:
@@ -151,36 +152,35 @@ def audit_docx(path: Path, profile: dict[str, Any]) -> dict[str, Any]:
             if not text:
                 continue
             run_count += 1
-            script = script_for(text)
+            scripts = scripts_for(text)
             fonts = direct_docx_fonts(run)
             location = f"word/document.xml:run-{index}"
-            if script is None:
-                continue
-            expected = wanted_fonts(profile, "docx", script)
-            actual = fonts.get(script)
-            if actual:
-                direct_usage[script][actual] += 1
-                if expected and actual not in expected:
-                    findings.append(
-                        finding(
-                            "RW-O-101",
-                            "warn",
-                            location,
-                            f"直接设置的 {script} 字体不符合当前 profile。",
-                            actual,
+            for script in scripts:
+                expected = wanted_fonts(profile, "docx", script)
+                actual = fonts.get(script)
+                if actual:
+                    direct_usage[script][actual] += 1
+                    if expected and actual not in expected:
+                        findings.append(
+                            finding(
+                                "RW-O-101",
+                                "warn",
+                                location,
+                                f"直接设置的 {script} 字体不符合当前 profile。",
+                                actual,
+                            )
                         )
-                    )
-            else:
-                unresolved[script] += 1
-                if script == "eastAsia":
-                    findings.append(
-                        finding(
-                            "RW-O-102",
-                            "info",
-                            location,
-                            "含中文的 run 未直接设置 eastAsia 字体；需结合样式、模板和渲染结果确认继承字体。",
+                else:
+                    unresolved[script] += 1
+                    if script == "eastAsia":
+                        findings.append(
+                            finding(
+                                "RW-O-102",
+                                "info",
+                                location,
+                                "含中文的 run 未直接设置 eastAsia 字体；需结合样式、模板和渲染结果确认继承字体。",
+                            )
                         )
-                    )
         if run_count == 0:
             findings.append(finding("RW-O-103", "warn", "word/document.xml", "未找到可审计的文本 run。"))
     return {
@@ -239,36 +239,34 @@ def audit_pptx(path: Path, profile: dict[str, Any]) -> dict[str, Any]:
             for run_index, (text, fonts) in enumerate(iter_ppt_runs(slide), start=1):
                 if not text:
                     continue
-                script = script_for(text)
-                if script is None:
-                    continue
                 location = f"{slide_name}:run-{run_index}"
-                typeface = fonts.get(script) or fonts.get("latin")
-                actual = resolve_theme_font(typeface, theme, script) if typeface else None
-                expected = wanted_fonts(profile, "pptx", script)
-                if actual:
-                    direct_usage[script][actual] += 1
-                    if expected and actual not in expected:
-                        findings.append(
-                            finding(
-                                "RW-O-201",
-                                "warn",
-                                location,
-                                f"直接设置的 {script} 字体不符合当前 profile。",
-                                actual,
+                for script in scripts_for(text):
+                    typeface = fonts.get(script)
+                    actual = resolve_theme_font(typeface, theme, script) if typeface else None
+                    expected = wanted_fonts(profile, "pptx", script)
+                    if actual:
+                        direct_usage[script][actual] += 1
+                        if expected and actual not in expected:
+                            findings.append(
+                                finding(
+                                    "RW-O-201",
+                                    "warn",
+                                    location,
+                                    f"直接设置的 {script} 字体不符合当前 profile。",
+                                    actual,
+                                )
                             )
-                        )
-                else:
-                    unresolved[script] += 1
-                    if script == "eastAsia":
-                        findings.append(
-                            finding(
-                                "RW-O-202",
-                                "info",
-                                location,
-                                "含中文的 run 未直接设置或无法解析东亚字体；需检查母版、主题和渲染结果。",
+                    else:
+                        unresolved[script] += 1
+                        if script == "eastAsia":
+                            findings.append(
+                                finding(
+                                    "RW-O-202",
+                                    "info",
+                                    location,
+                                    "含中文的 run 未直接设置或无法解析东亚字体；需检查母版、主题和渲染结果。",
+                                )
                             )
-                        )
     return {
         "office_kind": "pptx",
         "theme_fonts": theme,
@@ -360,6 +358,7 @@ def audit(
     available_fonts_path: Path | None = None,
     render: str = "off",
     output_dir: Path | None = None,
+    visual_inspection_confirmed: bool = False,
 ) -> dict[str, Any]:
     if not path.is_file():
         raise OfficeQaError(f"文件不存在: {path}")
@@ -373,7 +372,15 @@ def audit(
     office_audit = audit_docx(path, profile) if suffix == ".docx" else audit_pptx(path, profile)
     office_audit["findings"].extend(availability_findings(office_audit, available_fonts))
     gate = render_gate(path, render, output_dir)
-    if render == "required" and gate["status"] != "rendered_pending_inspection":
+    if render == "required" and gate["status"] == "rendered_pending_inspection":
+        if visual_inspection_confirmed:
+            gate["status"] = "verified"
+            gate["instruction"] = "调用者已确认逐页检查渲染结果。"
+        else:
+            office_audit["findings"].append(
+                finding("RW-O-401", "blocker", "render-gate", "渲染已生成但尚未完成逐页人工检查。")
+            )
+    elif render == "required":
         office_audit["findings"].append(
             finding("RW-O-401", "blocker", "render-gate", "要求渲染验证，但渲染门禁未完成。")
         )
@@ -399,6 +406,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--font-profile", type=Path, help="经确认的字体 profile JSON")
     parser.add_argument("--available-fonts", type=Path, help="目标环境字体清单（JSON 数组或每行一个字体）")
     parser.add_argument("--render", choices=("auto", "required", "off"), default="off")
+    parser.add_argument(
+        "--confirm-visual-inspection",
+        action="store_true",
+        help="调用者已逐页检查渲染结果；仅用于 required 渲染门禁",
+    )
     parser.add_argument("--output-dir", type=Path, help="渲染产物目录；不写入输入文件目录")
     parser.add_argument("--format", choices=("json", "text"), default="json")
     args = parser.parse_args(argv)
@@ -409,6 +421,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             available_fonts_path=args.available_fonts,
             render=args.render,
             output_dir=args.output_dir,
+            visual_inspection_confirmed=args.confirm_visual_inspection,
         )
     except OfficeQaError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)

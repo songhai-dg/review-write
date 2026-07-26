@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.4 - 2026-07-25
+
+- 修复 edge 更新通道错误选择稳定版的问题，仅选择有效的 prerelease。
+- 自动更新策略按发布配置强制执行 GitHub attestation；拒绝危险的 Release 资产路径。
+- 修复 DOCX/PPTX 混合中英文 run 的字体漏检，并移除 PPTX 用 latin 字体冒充 eastAsia 字体的回退。
+- 修复 required 渲染门禁在尚未人工逐页检查时错误通过的问题，增加显式视觉确认参数。
+
 ## 0.5.3 - 2026-07-23
 
 - 新增正式版本分发包：统一生成安装指令、GitHub/Gitee/SkillHub/Agent Skills 目录文案及公众号、视频号宣传素材。

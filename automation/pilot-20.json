@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "pilot_id": "reviewwrite-pilot-20",
+  "timezone": "America/Los_Angeles",
+  "total_rounds": 20,
+  "review_rounds": [
+    4,
+    8,
+    12,
+    16,
+    20
+  ],
+  "max_action_rounds_per_day": 2,
+  "heartbeat_interval_hours": 4,
+  "candidate_branch": "bot/pilot-20",
+  "pull_request_mode": "single-draft",
+  "version_policy": {
+    "accepted_implementation": "patch",
+    "review_only": "no-bump",
+    "no_evidence": "no-bump",
+    "stable_promotion": "human-review-required"
+  },
+  "publication_policy": {
+    "pilot_public_release": false,
+    "pilot_push_candidate_branch": false,
+    "pilot_merge_main": false,
+    "pilot_create_stable_tag": false
+  },
+  "change_limits": {
+    "max_primary_problems_per_round": 1,
+    "max_changed_tracked_files_per_round": 12,
+    "max_new_runtime_dependencies": 0,
+    "allow_license_change": false,
+    "allow_safety_gate_weakening": false,
+    "allow_runtime_network_access": false
+  },
+  "evidence_lanes": [
+    "repository-bugs-and-regressions",
+    "user-or-issue-examples",
+    "competitor-primary-sources",
+    "research-primary-sources"
+  ]
+}

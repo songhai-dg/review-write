@@ -305,6 +305,9 @@ class ReviewWriteLintTests(unittest.TestCase):
             self.assertNotIn("scripts/install_skill.py", names)
             self.assertNotIn("tests/test_lint.py", names)
 
+    def test_legacy_duplicate_runtime_entry_is_absent(self) -> None:
+        self.assertFalse((ROOT / "skills" / "reviewwrite" / "SKILL.md").exists())
+
     def test_docx_office_qa_detects_profile_mismatch_without_claiming_availability(self) -> None:
         import tempfile
         import zipfile
@@ -372,6 +375,58 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertEqual(required["status"], "blocker")
         self.assertEqual(required["render_gate"]["status"], "unavailable")
         self.assertIn("RW-O-401", {item["code"] for item in required["audit"]["findings"]})
+
+    def test_pptx_mixed_script_run_does_not_use_latin_as_east_asia(self) -> None:
+        import tempfile
+        import zipfile
+
+        slide_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+<p:cSld><p:spTree><p:sp><p:txBody><a:p>
+  <a:r><a:rPr><a:latin typeface="Confirmed Latin Body Font"/></a:rPr><a:t>中文 English</a:t></a:r>
+</a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>"""
+        profile = {
+            "name": "test-profile",
+            "fonts": {
+                "eastAsia": ["Confirmed Chinese Body Font"],
+                "latin": ["Confirmed Latin Body Font"],
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pptx = root / "mixed.pptx"
+            with zipfile.ZipFile(pptx, "w") as archive:
+                archive.writestr("ppt/slides/slide1.xml", slide_xml)
+            profile_path = root / "profile.json"
+            profile_path.write_text(json.dumps(profile, ensure_ascii=False), encoding="utf-8")
+            report = office_qa.audit(pptx, profile_path=profile_path, render="off")
+        codes = {item["code"] for item in report["audit"]["findings"]}
+        self.assertIn("RW-O-202", codes)
+        self.assertNotIn("eastAsia", report["audit"]["direct_font_usage"])
+
+    def test_required_render_needs_explicit_visual_confirmation(self) -> None:
+        import tempfile
+        import zipfile
+
+        document_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p>
+  <w:r><w:t>正文</w:t></w:r>
+</w:p></w:body></w:document>"""
+        with tempfile.TemporaryDirectory() as directory:
+            docx = Path(directory) / "sample.docx"
+            with zipfile.ZipFile(docx, "w") as archive:
+                archive.writestr("word/document.xml", document_xml)
+            pending = {"status": "rendered_pending_inspection", "pdf": "/tmp/sample.pdf", "pngs": []}
+            with mock.patch("office_qa.render_gate", return_value=pending):
+                unconfirmed = office_qa.audit(docx, render="required")
+            with mock.patch("office_qa.render_gate", return_value=pending.copy()):
+                confirmed = office_qa.audit(
+                    docx, render="required", visual_inspection_confirmed=True
+                )
+        self.assertEqual(unconfirmed["status"], "blocker")
+        self.assertIn("RW-O-401", {item["code"] for item in unconfirmed["audit"]["findings"]})
+        self.assertEqual(confirmed["status"], "pass")
+        self.assertEqual(confirmed["render_gate"]["status"], "verified")
 
     def test_cross_platform_install_plans_are_non_destructive(self) -> None:
         project_root = ROOT / "tests" / "fixtures"
@@ -455,6 +510,29 @@ class ReviewWriteLintTests(unittest.TestCase):
                 current, reviewwrite_update.Version.parse("2.0.0"), "auto-minor"
             )
         )
+
+    def test_edge_channel_selects_latest_non_draft_prerelease(self) -> None:
+        releases = [
+            {"tag_name": "v0.6.0", "draft": False, "prerelease": False},
+            {"tag_name": "v0.5.5-beta", "draft": False, "prerelease": True},
+            {"tag_name": "v0.5.4-alpha", "draft": False, "prerelease": True},
+        ]
+        with mock.patch.object(reviewwrite_update, "_request_json", return_value=releases):
+            selected = reviewwrite_update._select_release("owner/repo", "edge")
+        self.assertEqual(selected["tag_name"], "v0.5.5-beta")
+
+    def test_automatic_download_enforces_policy_attestation(self) -> None:
+        release = {"tag_name": "v0.5.5", "html_url": "https://example.test", "assets": []}
+        with mock.patch.object(reviewwrite_update, "release_info", return_value=(release, False)), \
+             mock.patch.object(reviewwrite_update, "download_verified", return_value=Path("/tmp/x")) as download:
+            reviewwrite_update.main(
+                ["download", "--repo", "owner/repo", "--policy", "auto-patch", "--format", "json"]
+            )
+        self.assertTrue(download.call_args.args[2])
+
+    def test_release_asset_names_cannot_escape_download_directory(self) -> None:
+        with self.assertRaises(ValueError):
+            reviewwrite_update._safe_asset_name("../reviewwrite.skill", ".skill")
 
     def test_copy_upgrade_preserves_previous_bundle(self) -> None:
         import tempfile

@@ -25,7 +25,7 @@ from typing import Any, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.5.3"
+USER_AGENT = "ReviewWrite-Updater/0.5.4"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 
@@ -89,10 +89,17 @@ def _select_release(repository: str, channel: str) -> dict[str, Any]:
     )
     if not isinstance(payload, list):
         raise ValueError("GitHub releases 响应无效")
-    for release in payload:
-        if not release.get("draft"):
-            return release
-    raise ValueError("没有可用的 edge release")
+    candidates = [
+        release
+        for release in payload
+        if not release.get("draft") and release.get("prerelease")
+    ]
+    if not candidates:
+        raise ValueError("没有可用的 edge prerelease")
+    try:
+        return max(candidates, key=lambda release: Version.parse(str(release["tag_name"])))
+    except (KeyError, ValueError) as exc:
+        raise ValueError("edge release 中存在无效版本号") from exc
 
 
 def _cache_file(repository: str, channel: str) -> Path:
@@ -149,6 +156,15 @@ def _asset(release: dict[str, Any], suffix: str) -> dict[str, Any]:
     return matches[0]
 
 
+def _safe_asset_name(value: Any, suffix: str) -> str:
+    name = str(value)
+    if not name or Path(name).name != name or name in {".", ".."}:
+        raise ValueError(f"release 资产文件名非法: {name}")
+    if not name.endswith(suffix):
+        raise ValueError(f"release 资产文件名不是 {suffix}: {name}")
+    return name
+
+
 def _download(url: str, destination: Path, expected_size: int | None = None) -> None:
     if expected_size is not None and expected_size > MAX_ASSET_BYTES:
         raise ValueError("下载资产超过 20 MiB 安全上限")
@@ -172,8 +188,8 @@ def download_verified(
     checksum = _asset(release, ".skill.sha256")
     destination_dir = cache_root() / "downloads" / str(release["tag_name"])
     destination_dir.mkdir(parents=True, exist_ok=True)
-    package_path = destination_dir / str(package["name"])
-    checksum_path = destination_dir / str(checksum["name"])
+    package_path = destination_dir / _safe_asset_name(package.get("name"), ".skill")
+    checksum_path = destination_dir / _safe_asset_name(checksum.get("name"), ".skill.sha256")
     package_part = package_path.with_suffix(package_path.suffix + ".part")
     checksum_part = checksum_path.with_suffix(checksum_path.suffix + ".part")
     try:
@@ -256,7 +272,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                         payload["status"] = "policy-blocked"
                         payload["reason"] = f"{update_policy} 不允许下载该版本"
                     else:
-                        path = download_verified(repository, release, args.require_attestation)
+                        require_attestation = args.require_attestation or (
+                            automatic_policy
+                            and bool(
+                                update_config.get(
+                                    "require_github_attestation_for_automatic_apply", False
+                                )
+                            )
+                        )
+                        path = download_verified(repository, release, require_attestation)
                         payload["downloaded_to"] = str(path)
                         payload["status"] = "downloaded"
         if args.format == "json":

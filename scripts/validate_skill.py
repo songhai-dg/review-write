@@ -13,7 +13,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "SKILL.md",
-    "skills/reviewwrite/SKILL.md",
     "README.md",
     "LICENSE",
     "NOTICE.md",
@@ -37,6 +36,11 @@ REQUIRED_FILES = (
     "references/office-qa.md",
     "references/font-profiles.md",
     "references/office-integrations.md",
+    "references/competitor-evaluation.md",
+    "automation/pilot-20.md",
+    "automation/pilot-20.json",
+    "automation/pilot-state.json",
+    "automation/pilot-log.md",
     "examples/office-qa/font-profile.example.json",
     "references/fewshots/manifest.json",
     "examples/simulation/manifest.json",
@@ -96,19 +100,12 @@ def validate() -> list[str]:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         errors.append(f"安装提示无效: {exc}")
 
-    runtime_skill_path = ROOT / "skills" / "reviewwrite" / "SKILL.md"
-    if runtime_skill_path.is_file() and skill_path.is_file():
-        runtime_version = re.search(
-            r"(?m)^version: ([^\n]+)$", runtime_skill_path.read_text(encoding="utf-8")
-        )
-        root_version = re.search(
-            r"(?m)^version: ([^\n]+)$", skill_path.read_text(encoding="utf-8")
-        )
-        if not runtime_version or not root_version or runtime_version.group(1) != root_version.group(1):
-            errors.append("根目录与运行时 SKILL.md 版本不一致")
+    legacy_runtime_path = ROOT / "skills" / "reviewwrite" / "SKILL.md"
+    if legacy_runtime_path.exists():
+        errors.append("发现已废弃的重复运行时入口: skills/reviewwrite/SKILL.md")
 
-        if "natural_language_aliases: [\"审写\", \"ReviewWrite\"]" not in skill_text:
-            errors.append("SKILL.md 缺少审写与 ReviewWrite 的自然语言简称声明")
+    if skill_path.is_file() and "natural_language_aliases: [\"审写\", \"ReviewWrite\"]" not in skill_text:
+        errors.append("SKILL.md 缺少审写与 ReviewWrite 的自然语言简称声明")
 
         for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", readme):
             if target.startswith(("http://", "https://", "#")):
