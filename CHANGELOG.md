@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2 - 2026-07-26
+
+- 修正运行时安全边界文档，明确更新器仅在显式启用时联网、读取可选令牌或调用 `gh`，默认审写路径保持本地只读。
+- 将 CI 扩展到 Ubuntu、macOS 和 Windows，并明确 Python 3.10+ 运行要求。
+- 更新器缓存改用 Windows、macOS、Linux 的原生缓存目录，并增加对应回归测试。
+- 修正发布说明与分发文案的版本漂移，保持运行时包、文档和发布边界一致。
+
 ## 0.6.1 - 2026-07-26
 
 - 修复运行时 `.skill` 包遗漏 `scripts/reviewwrite_update.py` 和 `release-policy.json` 的问题，恢复安装后更新检查能力。

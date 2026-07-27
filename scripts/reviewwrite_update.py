@@ -18,6 +18,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -25,7 +26,7 @@ from typing import Any, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.6.1"
+USER_AGENT = "ReviewWrite-Updater/0.6.2"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 
@@ -60,11 +61,28 @@ def repository_from(args_repo: str | None, policy: dict[str, Any]) -> str | None
     return value
 
 
-def cache_root() -> Path:
-    configured = os.environ.get("REVIEWWRITE_CACHE_DIR")
+def cache_root_for(
+    os_name: str,
+    sys_platform: str,
+    environment: Mapping[str, str],
+    home: Path,
+) -> Path:
+    configured = environment.get("REVIEWWRITE_CACHE_DIR")
     if configured:
         return Path(configured).expanduser().resolve()
-    return Path.home() / ".cache" / "reviewwrite"
+    if os_name == "nt":
+        base = environment.get("LOCALAPPDATA") or str(home / "AppData" / "Local")
+        return Path(base) / "ReviewWrite" / "Cache"
+    if sys_platform == "darwin":
+        return home / "Library" / "Caches" / "ReviewWrite"
+    xdg_cache = environment.get("XDG_CACHE_HOME")
+    if xdg_cache:
+        return Path(xdg_cache).expanduser().resolve() / "reviewwrite"
+    return home / ".cache" / "reviewwrite"
+
+
+def cache_root() -> Path:
+    return cache_root_for(os.name, sys.platform, os.environ, Path.home())
 
 
 def _request_json(url: str) -> dict[str, Any] | list[dict[str, Any]]:

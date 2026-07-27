@@ -48,7 +48,7 @@ def render(version: str | None = None) -> str:
 1. 下载或安装前先核对官方仓库、Release tag、SHA-256 和发布 attestation。
 2. 已存在 ReviewWrite 时不得覆盖；先报告已安装版本和路径，再按宿主平台的原生流程升级。
 3. 安装后确认 `reviewwrite` 可被发现。平台不支持或权限不足时停止并说明原因。
-4. 运行时包只包含 `SKILL.md`、参考资料和本地预检脚本；预检脚本不联网、不读取凭证、不修改输入文件。完整边界见 `SECURITY.md`。
+4. 运行时包包含 `SKILL.md`、参考资料、本地预检脚本和可选更新器；默认写作路径不联网。只有明确启用更新检查/下载时，更新器才访问 Release、读取可选令牌或调用 `gh`。完整边界见 `SECURITY.md`。
 
 ## 已验证
 

@@ -36,6 +36,32 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertIn("scripts/reviewwrite_update.py", bundle_paths)
         self.assertIn("release-policy.json", bundle_paths)
 
+    def test_update_cache_root_uses_native_platform_defaults(self) -> None:
+        home = Path("/home/reviewwrite")
+        self.assertEqual(
+            reviewwrite_update.cache_root_for(
+                "nt",
+                "win32",
+                {"LOCALAPPDATA": r"C:\\Users\\reviewwrite\\AppData\\Local"},
+                home,
+            ),
+            Path(r"C:\\Users\\reviewwrite\\AppData\\Local") / "ReviewWrite" / "Cache",
+        )
+        self.assertEqual(
+            reviewwrite_update.cache_root_for("posix", "darwin", {}, home),
+            home / "Library" / "Caches" / "ReviewWrite",
+        )
+        self.assertEqual(
+            reviewwrite_update.cache_root_for("posix", "linux", {}, home),
+            home / ".cache" / "reviewwrite",
+        )
+        self.assertEqual(
+            reviewwrite_update.cache_root_for(
+                "posix", "linux", {"XDG_CACHE_HOME": "/tmp/custom-cache"}, home
+            ),
+            Path("/tmp/custom-cache").resolve() / "reviewwrite",
+        )
+
     def test_clean_policy_has_no_findings(self) -> None:
         text = (ROOT / "tests/fixtures/clean_policy.zh.md").read_text(encoding="utf-8")
         self.assertEqual(reviewwrite_lint.lint_text(text), [])

@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "reviewwrite_version": "0.6.1",
+  "reviewwrite_version": "0.6.2",
   "format": "agentskills.io-compatible",
+  "python_requirement": ">=3.10",
   "skill_id": "reviewwrite",
   "display_name": "审写 · ReviewWrite",
   "natural_language_aliases": [

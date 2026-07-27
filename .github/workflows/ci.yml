@@ -11,19 +11,34 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.10", "3.12", "3.13"]
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+            python_cmd: python3
+          - os: ubuntu-latest
+            python: "3.12"
+            python_cmd: python3
+          - os: ubuntu-latest
+            python: "3.13"
+            python_cmd: python3
+          - os: macos-latest
+            python: "3.12"
+            python_cmd: python3
+          - os: windows-latest
+            python: "3.12"
+            python_cmd: python
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
       - name: Validate skill structure
-        run: python3 scripts/validate_skill.py
+        run: ${{ matrix.python_cmd }} scripts/validate_skill.py
       - name: Run regression tests
-        run: python3 -m unittest discover -s tests -v
+        run: ${{ matrix.python_cmd }} -m unittest discover -s tests -v
       - name: Build deterministic skill package
-        run: python3 scripts/package_skill.py
+        run: ${{ matrix.python_cmd }} scripts/package_skill.py
