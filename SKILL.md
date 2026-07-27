@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.6.2
+version: 0.7.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -101,6 +101,7 @@ platforms: [linux, macos, windows]
 - few-shot 选择规则：[references/few-shot-policy.md](references/few-shot-policy.md)
 - 中文自然表达信号：[references/style-signals.md](references/style-signals.md)
 - 跨语言专业翻译、术语保持和双语复核：[references/translation-qa.md](references/translation-qa.md)；当任务涉及翻译、双语改写或跨语言体裁迁移时读取；
+- 超长文档分块预检、全局索引和一致性线索：[references/long-document-review.md](references/long-document-review.md)；当正文达到约十万字、需要章节级审查或超出单次上下文时读取；
 - 平台安装和调用差异：[references/platforms.md](references/platforms.md)
 - 可选更新策略：[references/update-policy.md](references/update-policy.md)
 - 新手任务、最小输入和常见问答：[references/quickstart.md](references/quickstart.md)
@@ -134,6 +135,8 @@ platforms: [linux, macos, windows]
 当前经过内置规则与 few-shot 覆盖的是 `zh-CN` 和通用专业英语。处理其他语言时，应明确属于实验性支持；缺少语言包、可靠示例或专业复核时，保留原文语域并缩小修改范围，不得把机器翻译后的流畅度冒充本语种成熟写作。
 
 涉及翻译或双语改写时，读取 [references/translation-qa.md](references/translation-qa.md)。先建立源语言、目标语言、地区规范、话语共同体和体裁契约，再做术语、主张、证据、限定条件和责任边界对齐；译文生成后必须进行目标语言独立审校，不把逐句对应或回译当成充分验收。
+
+涉及十万字及以上长文档时，读取 [references/long-document-review.md](references/long-document-review.md)，使用分块预检、全局索引和章节级复核。必须报告全文字符数、块数、覆盖范围和未完成的全局语义复核，不得把已检查的片段声称为整篇文档已完成。
 
 ### Office QA 路由（仅按需）
 

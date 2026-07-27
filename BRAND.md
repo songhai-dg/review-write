@@ -32,7 +32,8 @@
 2. 一个硬门：提示词、推理、工具和编辑过程不得进入正文；
 3. 一个承诺：事实、引用、数字、术语和限定条件可核对；
 4. 一套体裁：论文、基金、公众号、政策、公文、报告和跨语言专业审写；
-5. 多个平台：Codex、Claude、Hermes、Gemini、Copilot、OpenClaw、WorkBuddy 使用同一能力核心。
+5. 一项长文能力：十万字级文本分块审查、全局索引和跨章节一致性线索；
+6. 多个平台：Codex、Claude、Hermes、Gemini、Copilot、OpenClaw、WorkBuddy 使用同一能力核心。
 
 ## Open-source moat
 

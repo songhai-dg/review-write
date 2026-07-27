@@ -16,6 +16,7 @@ import package_skill  # noqa: E402
 import install_skill  # noqa: E402
 import bump_version  # noqa: E402
 import reviewwrite_update  # noqa: E402
+import long_document_review  # noqa: E402
 import print_install_prompt  # noqa: E402
 import render_release_notes  # noqa: E402
 import office_qa  # noqa: E402
@@ -35,6 +36,24 @@ class ReviewWriteLintTests(unittest.TestCase):
         bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
         self.assertIn("scripts/reviewwrite_update.py", bundle_paths)
         self.assertIn("release-policy.json", bundle_paths)
+
+    def test_long_document_review_preserves_global_locations(self) -> None:
+        paragraph = "普通正文。这里保留上下文和限定条件，不能只看局部，审核结论还需要回到原始证据和适用范围。"
+        text = ((paragraph + "\n\n") * 4500)
+        text += "作为一个 AI，我无法核验。\n"
+        text += ("结果为 4.8%。这个结果需要结合样本范围解释。\n\n" * 4500)
+        result = long_document_review.review_document(text, max_chars=6000, overlap=128)
+        self.assertGreater(result["summary"]["characters"], 100_000)
+        self.assertGreater(result["summary"]["chunks"], 10)
+        self.assertEqual(result["summary"]["characters"], len(text))
+        findings = result["findings"]
+        self.assertTrue(any(item["rule_id"] == "RW-F-003" and item["line"] > 1000 for item in findings))
+        self.assertTrue(any(item["value"] == "4.8%" for item in result["number_index"]))
+        duplicate_groups = result["duplicate_paragraphs"]
+        self.assertTrue(duplicate_groups)
+        self.assertGreaterEqual(duplicate_groups[0]["occurrences"][1][0], 2)
+        bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
+        self.assertIn("scripts/long_document_review.py", bundle_paths)
 
     def test_update_cache_root_uses_native_platform_defaults(self) -> None:
         home = Path("/home/reviewwrite")

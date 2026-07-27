@@ -7,12 +7,14 @@ Release 中的 `.skill` 运行时包只包含：
 - `SKILL.md` 与 `agents/openai.yaml`；
 - `references/` 下的 Markdown 规则、体裁包和 few-shot；
 - `scripts/reviewwrite_lint.py` 本地 UTF-8 文本预检；
+- `scripts/long_document_review.py` 本地超长文本分块预检与全局索引；
 - `scripts/office_qa.py` 本地 DOCX/PPTX 只读结构审计。
 - `scripts/reviewwrite_update.py` 和 `release-policy.json`，仅在用户或平台明确启用更新检查时使用；
 - 一个不含真实字体名称的 `examples/office-qa/font-profile.example.json` 配置结构样例。
 
 默认写作任务不会调用更新器。更新器只有在用户或平台明确启用更新检查/下载时才联网；它可能读取 `GITHUB_TOKEN` 以访问 GitHub API，并在要求 attestation 时调用本机 `gh`。它只检查和下载 Release 资产，不上传用户正文、不修改输入文件，也不自动覆盖已安装技能。更新缓存和下载文件写入平台缓存目录或用户通过 `REVIEWWRITE_CACHE_DIR` 指定的目录。
 `reviewwrite_lint.py` 只读取用户指定的本地文件或标准输入，输出诊断结果；它不联网、不读取凭证、不修改输入文件，也不会上传正文。`office_qa.py` 默认只读取用户指定的 `.docx`/`.pptx` 和可选的本地 profile/字体清单；它不会修改或上传输入文件。仅当调用者显式使用渲染模式时，它才会尝试调用本机可发现的 `soffice` 和可选 `pdftoppm`，并只向调用者指定的输出目录（或临时目录）写入 PDF/PNG 预览。
+`long_document_review.py` 只读取用户指定的 UTF-8 文本或标准输入，按有限重叠分块调用本地预检器，并在本地生成行号、数字、标题、术语变体和重复段落索引；它不联网、不读取凭证、不修改输入文件，也不会上传正文。
 
 宿主智能体、模型提供方和用户自行启用的工具可能具有不同权限。ReviewWrite 不能替代宿主平台的权限确认、数据处理政策或对不可信 Skill 的审查。
 

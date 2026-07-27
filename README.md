@@ -22,6 +22,16 @@
 
 运行环境要求 Python 3.10 或更高版本；正文审写默认只读取本地输入，不联网。更新检查是可选能力，只有用户或平台明确启用时才访问 Release。
 
+### 超长文档也能审，但不夸大完成度
+
+面对十万字、几十万字的报告、论文、政策材料或长篇研究文本，ReviewWrite 不把全文粗暴塞进一次上下文，也不把几段抽样结果包装成“全文已审核”。它按章节和段落分块，保留全文行号与块号，建立数字、标题和术语一致性索引，并明确报告尚未完成的跨章主张—证据复核。
+
+```bash
+python3 scripts/long_document_review.py path/to/long-draft.md --format json
+```
+
+分块预检解决上下文长度、定位和一致性线索问题；事实、引用、法律责任和跨章论证仍需全局模型或人工复核。
+
 ### 最重要的差异：不拿幻觉换人味
 
 ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件、标记待核验，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
@@ -69,6 +79,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 
 - 适配论文、基金、政策、报告、公文、备忘录、营销和双语写作；
 - 0.6.0 增加跨语言专业审写：中英互译时保护数字、引用、术语、主张、限定条件和责任边界，并按目标地区、体裁和话语共同体独立审校；
+- 支持超长文档审写：对十万字及更长文本进行分块预检、全文行号定位、数字/标题索引、术语变体和重复段落检查，避免把片段检查误报成全文完成；
 - 根据语言、读者和真实体裁选择表达，不强套模板；
 - 增加技术解读/产业评论路由：检查模型、推理、设备、内存和性能主张中的叠加式模板信号与技术口径；
 - 默认保护数字、引用、专名、义务和限定条件；
@@ -77,6 +88,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 - 识别空泛强化和公式化转折，但必须按体裁、上下文与证据判断，不使用生硬禁词表；
 - 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举。
 - 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件。
+- 对超长 UTF-8 文本提供分块预检和全局一致性索引；明确报告覆盖范围，不把部分审核声称为全文完成。
 
 ### AI 风格与过程残留审查清单
 
@@ -225,6 +237,7 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 
 - genre-aware Chinese and English writing support;
 - cross-language professional review between Chinese and English, preserving terminology, claims, qualifications, and responsibility boundaries across translation;
+- long-document review for 100k+ characters: chunked preflight, global locations, heading/number indexes, term-variant and duplicate-paragraph signals, with explicit coverage and limitation reporting;
 - technical commentary review for model, inference, device, memory, and performance claims, including composite template signals and scope checks;
 - context-sensitive routing by language, audience, locale, and discourse community;
 - protection for facts, numbers, citations, names, obligations, and qualifications;
