@@ -31,6 +31,11 @@ class ReviewWriteLintTests(unittest.TestCase):
         bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
         self.assertIn("references/translation-qa.md", bundle_paths)
 
+    def test_runtime_bundle_contains_update_checker_contract(self) -> None:
+        bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
+        self.assertIn("scripts/reviewwrite_update.py", bundle_paths)
+        self.assertIn("release-policy.json", bundle_paths)
+
     def test_clean_policy_has_no_findings(self) -> None:
         text = (ROOT / "tests/fixtures/clean_policy.zh.md").read_text(encoding="utf-8")
         self.assertEqual(reviewwrite_lint.lint_text(text), [])
@@ -310,7 +315,8 @@ class ReviewWriteLintTests(unittest.TestCase):
             self.assertIn("references/fewshots/manifest.json", names)
             self.assertIn("agents/openai.yaml", names)
             self.assertIn("references/language-packs/README.md", names)
-            self.assertNotIn("scripts/reviewwrite_update.py", names)
+            self.assertIn("scripts/reviewwrite_update.py", names)
+            self.assertIn("release-policy.json", names)
             self.assertNotIn("scripts/install_skill.py", names)
             self.assertNotIn("tests/test_lint.py", names)
 

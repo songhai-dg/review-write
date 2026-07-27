@@ -10,7 +10,7 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 SKILL_ID = "reviewwrite"
 
 
@@ -20,6 +20,8 @@ def bundle_files() -> list[Path]:
         ROOT / "agents" / "openai.yaml",
         ROOT / "scripts" / "reviewwrite_lint.py",
         ROOT / "scripts" / "office_qa.py",
+        ROOT / "scripts" / "reviewwrite_update.py",
+        ROOT / "release-policy.json",
         ROOT / "examples" / "office-qa" / "font-profile.example.json",
     ]
     references = sorted(path for path in (ROOT / "references").rglob("*") if path.is_file())

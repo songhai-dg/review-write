@@ -20,6 +20,12 @@
 
 审写 · ReviewWrite 面向中英文专业写作：先判断文本和目标，再评审、改写、复核。它保护事实、引用、限定条件和作者声音，不把“像人”理解为制造错误或规避检测。
 
+### 最重要的差异：不拿幻觉换人味
+
+ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件、标记待核验，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
+
+它背后的方法论来自教授团队与专业研发团队长期从事高质量写作、审稿和交付的经验积累，不是把几个“去 AI 痕迹”词表拼在一起。ReviewWrite 关注的是主张是否有证据、限定条件是否完整、体裁是否合适，以及修改后能否真正交付。
+
 ### 名称与调用：短，但不混乱
 
 - 技术 Skill ID：`reviewwrite`。支持 slash 调用的平台使用 `/reviewwrite`。
@@ -174,6 +180,10 @@ ReviewWrite 吸收并重新组织 Stop Slop、Humanizer-zh 和 skill-deslop 的�
 ### Review first, then rewrite
 
 审写 · ReviewWrite is built for professional Chinese and English writing: it identifies the goal and context, then reviews, rewrites, and verifies the text while preserving facts, citations, qualifications, and authorial voice. It does not promise detector evasion or add mistakes to imitate a human author.
+
+Its central boundary is explicit: ReviewWrite does not invent experiences, data, sources, examples, emotions, or details to make text appear more human. When something cannot be confirmed, it preserves the qualification, marks it for review, or narrows the claim.
+
+Its method is informed by a professor-led and professional product team with long-term experience in high-quality writing, review, and delivery. ReviewWrite is not a bundle of “AI trace removal” word lists; it evaluates claims, evidence, qualifications, genre fit, and whether the revised text is ready for real use.
 
 ### Naming and invocation: short without ambiguity
 

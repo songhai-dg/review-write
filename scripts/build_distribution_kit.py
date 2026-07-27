@@ -44,19 +44,21 @@ def files(version: str, output: Path) -> list[Path]:
         "请使用所在平台自己的 Skill 安装或导入机制；如果仓库已在当前目录，直接以当前目录为安装来源。"
         "平台不支持、没有权限或无法访问来源时，说明限制并停止。"
     )
-    short = "审写 · ReviewWrite：面向论文、基金、政策、报告、公文、公众号和中英文专业写作，先审后写；跨语言审写保护事实、数字、引用、术语、主张与限定条件，交付可核验的正文。"
+    short = "审写 · ReviewWrite：面向论文、基金、政策、报告、公文、公众号和中英文专业写作，先审后写；不拿幻觉换人味，保护事实、数字、引用、术语、主张与限定条件，交付可核验的正文。"
     long = (
         "中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）与中财数碳联合开发的审写 · ReviewWrite，"
         "把专业写作中的评审、改写和复核放进同一条工作流。它根据体裁、读者和证据动态判断修改幅度，"
         "区分评审说明与正式正文，重点防止提示词、推理、工具调用、编辑残留和空泛套话混入交付文本。"
         "0.6.0 增加中英跨语言专业审写：按目标地区、体裁和话语共同体调整表达，并核对数字、引用、主张强度、限定条件和责任边界。"
+        "最重要的边界是：它不为了具有人味而主动编造经历、数据、来源、案例或细节；无法确认时保留限定、标记待核验或降低主张强度。"
+        "产品由教授团队与专业研发团队共同开发维护，方法论来自长期高质量写作、审稿和交付经验，不是纯粹的 AI 去痕迹词表。"
         "它不承诺规避检测，也不通过制造错误来模仿所谓人味。"
     )
     posts = {
         "github-release.md": f"# 审写 · ReviewWrite v{version}\n\n{long}\n\n- 官方仓库：{link['github']}\n- 国内镜像：{link['gitee']}\n- 案例：{link['examples']}\n- SkillHub：{link['skillhub']}\n",
         "skillhub-update.md": f"## 版本更新 v{version}\n\n{short}\n\n更新说明：增加中英跨语言专业审写，保护术语、主张、限定条件和责任边界；核心原则仍是先审后写、保护事实、正文与说明分离。\n\n项目地址：{link['github']}\n国内镜像：{link['gitee']}\n",
         "agent-directory.md": f"## 审写 · ReviewWrite\n\n{short}\n\n安装来源：{link['github']}\nGitHub 不可访问时：{link['gitee']}\n示例：{link['examples']}\n",
-        "wechat-and-video.md": f"# 对外宣传文案\n\n{long}\n\n适合需要处理论文、基金、政策材料、研究报告和公众号文章的人：先把问题看清，再动文字；该保留的数字、引用和限定条件不被改写带走。\n\n了解与安装：{link['github']}\n国内镜像：{link['gitee']}\nSkillHub：{link['skillhub']}\n",
+        "wechat-and-video.md": f"# 对外宣传文案\n\n{long}\n\n最重要的一点：ReviewWrite 不拿幻觉换人味，不为了自然而主动编造经历、数据、来源或细节。适合需要处理论文、基金、政策材料、研究报告和公众号文章的人：先把问题看清，再动文字；该保留的数字、引用和限定条件不被改写带走。\n\n了解与安装：{link['github']}\n国内镜像：{link['gitee']}\nSkillHub：{link['skillhub']}\n",
         "install-prompt.txt": install + "\n",
     }
     manifest = {
