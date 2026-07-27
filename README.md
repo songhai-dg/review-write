@@ -6,7 +6,7 @@
 
 不是 AI 检测规避器；是专业写作的交付质量控制。
 
-可复现证据：4 份合成案例的严格预检从 **14 fail / 23 warn** 降至 **0 / 0**；38 项受保护字面量通过逐字回归检查。[查看完整报告](examples/simulation/RUN_REPORT.md)
+可复现证据：4 份合成案例的严格预检从 **14 fail / 23 warn** 降至 **0 / 0**；38 项受保护字面量通过逐字回归检查。另有一项 **324,015 字符、55 个分块**的长文回归，能将问题定位回全文第 9,001 行。[查看完整报告](examples/simulation/RUN_REPORT.md)
 
 [中文](#中文) · [English](#english)
 
@@ -32,9 +32,9 @@ python3 scripts/long_document_review.py path/to/long-draft.md --format json
 
 分块预检解决上下文长度、定位和一致性线索问题；事实、引用、法律责任和跨章论证仍需全局模型或人工复核。
 
-### 最重要的差异：不拿幻觉换人味
+### 核心边界：不拿幻觉换人味
 
-ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件、标记待核验，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
+ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件，指出需要核实的部分，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
 
 它背后的方法论来自教授团队与专业研发团队长期从事高质量写作、审稿和交付的经验积累，不是把几个“去 AI 痕迹”词表拼在一起。ReviewWrite 关注的是主张是否有证据、限定条件是否完整、体裁是否合适，以及修改后能否真正交付。
 
@@ -110,9 +110,9 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 
 覆盖范围：中文 `zh-CN` 与通用专业英语；论文、基金、公众号、技术解读、政策、公文、报告、备忘录、营销和双语文本。规则输出评审信号，不生成“人味分数”，也不承诺规避任何检测器。
 
-### 四个可复现案例
+### 四个内容案例与一项长文回归
 
-四份合成案例直接展示问题稿、修改稿和验证结果：严格预检由 **14 个硬失败 / 23 个警告** 降至 **0 / 0**；38 项受保护字面量（数字、日期、角色与限定词）通过逐字回归检查。[查看完整复现报告](examples/simulation/RUN_REPORT.md)。
+四份合成案例直接展示问题稿、修改稿和验证结果：严格预检由 **14 个硬失败 / 23 个警告** 降至 **0 / 0**；38 项受保护字面量（数字、日期、角色与限定词）通过逐字回归检查。[查看完整复现报告](examples/simulation/RUN_REPORT.md)。另有长文回归测试：对 324,015 个字符切分为 55 个块，故意放入一处模型自述，预检将其定位到全文第 9,001 行；同时验证数字索引和重复段落索引。[查看测试代码](tests/test_lint.py)。
 
 | 案例 | 问题稿 | 修改稿 | 主要改进 | 预检 |
 | --- | --- | --- | --- | --- |
@@ -120,6 +120,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 | 基金申请 | [查看](examples/simulation/inputs/grant-rationale.zh.md) | [查看](examples/simulation/outputs/grant-rationale.zh.md) | 删除宣传腔和待办，补清研究设计 | 3 fail / 6 warn → 0 / 0 |
 | 政策简报 | [查看](examples/simulation/inputs/policy-brief.zh.md) | [查看](examples/simulation/outputs/policy-brief.zh.md) | 清理工具残留，明确选项和证据缺口 | 2 fail / 8 warn → 0 / 0 |
 | 英文管理备忘录 | [查看](examples/simulation/inputs/executive-memo.en.md) | [查看](examples/simulation/outputs/executive-memo.en.md) | 直接呈现决策、约束和风险 | 4 fail / 5 warn → 0 / 0 |
+| 超长文档预检 | [查看测试](tests/test_lint.py) | — | 324,015 字符分为 55 块，保留全局位置并建立数字、重复段落索引 | 1 fail / 0 warn，定位到 L9,001 |
 
 ### 安全与来源
 
@@ -155,7 +156,7 @@ python3 scripts/office_qa.py path/to/deck.pptx \
 
 当前核心支持 `zh-CN` 和通用专业英语。语言能力使用三个坐标：语言、地区规范和话语共同体。英文不能默认等于美式商业写作，中文也不能默认增加政策口号、谦辞或成语。
 
-0.6.0 开始支持跨语言专业审写：翻译前确认源语言、目标语言、地区规范、体裁、读者和术语；翻译后独立检查数字、引用、主张强度、限定条件、情态和责任边界。它不是逐句替换，也不把回译或流畅度当成专业准确性的证明。详见[跨语言专业审写](references/translation-qa.md)。
+0.6.0 开始支持跨语言专业审写：翻译前确认源语言、目标语言、地区规范、体裁、读者和术语；翻译后独立检查数字、引用、主张强度、限定条件、情态和责任边界。重点是把专业判断完整带入目标语言，不能用逐句替换、回译或流畅度代替准确性证明。详见[跨语言专业审写](references/translation-qa.md)。
 
 新增语言必须经过独立语言包、locale-aware few-shot、事实保持回归和本语种专业 review，才能从 `planned` 进入 `experimental`，再进入 `core`。详见[语言包规范](references/language-packs/README.md)。
 
@@ -269,7 +270,7 @@ Coverage includes `zh-CN` and general professional English across papers, grants
 
 ### Four reproducible cases
 
-Four synthetic cases show the draft, revision, and verification result. Strict preflight moved from **14 hard failures / 23 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). [Read the full reproducibility report](examples/simulation/RUN_REPORT.md).
+Four synthetic cases show the draft, revision, and verification result. Strict preflight moved from **14 hard failures / 23 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). A long-document regression also processes 324,015 characters in 55 chunks, maps an intentional model self-description to line 9,001, and checks number and duplicate-paragraph indexes. [Read the test code](tests/test_lint.py).
 
 | Case | Draft | Revision | Main improvement | Preflight |
 | --- | --- | --- | --- | --- |
@@ -277,6 +278,7 @@ Four synthetic cases show the draft, revision, and verification result. Strict p
 | Grant rationale | [View](examples/simulation/inputs/grant-rationale.zh.md) | [View](examples/simulation/outputs/grant-rationale.zh.md) | removes promotional language and TODOs | 3 fail / 6 warn → 0 / 0 |
 | Policy brief | [View](examples/simulation/inputs/policy-brief.zh.md) | [View](examples/simulation/outputs/policy-brief.zh.md) | clarifies options and evidence gaps | 2 fail / 8 warn → 0 / 0 |
 | Executive memo | [View](examples/simulation/inputs/executive-memo.en.md) | [View](examples/simulation/outputs/executive-memo.en.md) | puts decision, constraints, and risks first | 4 fail / 5 warn → 0 / 0 |
+| Long-document preflight | [View test](tests/test_lint.py) | — | 324,015 characters in 55 chunks, with global location and number/duplicate indexes | 1 fail / 0 warn, mapped to L9,001 |
 
 ### Security and provenance
 
