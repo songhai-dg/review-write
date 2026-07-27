@@ -10,7 +10,7 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.5.4"
+VERSION = "0.5.5"
 SKILL_ID = "reviewwrite"
 
 

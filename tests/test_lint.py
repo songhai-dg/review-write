@@ -522,7 +522,9 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertEqual(selected["tag_name"], "v0.5.5-beta")
 
     def test_automatic_download_enforces_policy_attestation(self) -> None:
-        release = {"tag_name": "v0.5.5", "html_url": "https://example.test", "assets": []}
+        current = bump_version.synchronized_current()
+        next_patch = bump_version.next_version(current, "patch")
+        release = {"tag_name": f"v{next_patch}", "html_url": "https://example.test", "assets": []}
         with mock.patch.object(reviewwrite_update, "release_info", return_value=(release, False)), \
              mock.patch.object(reviewwrite_update, "download_verified", return_value=Path("/tmp/x")) as download:
             reviewwrite_update.main(
