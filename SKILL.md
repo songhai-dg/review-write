@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.5.5
+version: 0.6.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -100,6 +100,7 @@ platforms: [linux, macos, windows]
 - 语言、地区和文化语境：[references/language-packs/README.md](references/language-packs/README.md)，再读取一个匹配的语言包；
 - few-shot 选择规则：[references/few-shot-policy.md](references/few-shot-policy.md)
 - 中文自然表达信号：[references/style-signals.md](references/style-signals.md)
+- 跨语言专业翻译、术语保持和双语复核：[references/translation-qa.md](references/translation-qa.md)；当任务涉及翻译、双语改写或跨语言体裁迁移时读取；
 - 平台安装和调用差异：[references/platforms.md](references/platforms.md)
 - 可选更新策略：[references/update-policy.md](references/update-policy.md)
 - 新手任务、最小输入和常见问答：[references/quickstart.md](references/quickstart.md)
@@ -117,6 +118,7 @@ platforms: [linux, macos, windows]
 从用户要求和原文动态确认：
 
 - 语言：中文、英文或双语；
+- 翻译任务还需确认源语言、目标语言、地区规范、话语共同体、术语表和双语交付方式；
 - 主要体裁和真实读者；
 - 写作目的与期望行动；
 - 必须保留的事实、数字、引用、术语、结构和措辞；
@@ -130,6 +132,8 @@ platforms: [linux, macos, windows]
 区分语言、地区规范和话语共同体。例如英文不能默认等于美式商业写作，中文也不能默认添加政策口号、谦辞或成语。先读取语言包，再结合体裁包、机构模板和真实读者判断信息顺序、直接程度、礼貌、引文、情态和格式。
 
 当前经过内置规则与 few-shot 覆盖的是 `zh-CN` 和通用专业英语。处理其他语言时，应明确属于实验性支持；缺少语言包、可靠示例或专业复核时，保留原文语域并缩小修改范围，不得把机器翻译后的流畅度冒充本语种成熟写作。
+
+涉及翻译或双语改写时，读取 [references/translation-qa.md](references/translation-qa.md)。先建立源语言、目标语言、地区规范、话语共同体和体裁契约，再做术语、主张、证据、限定条件和责任边界对齐；译文生成后必须进行目标语言独立审校，不把逐句对应或回译当成充分验收。
 
 ### Office QA 路由（仅按需）
 

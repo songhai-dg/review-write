@@ -45,9 +45,21 @@ preserve:
   - citations
   - names and defined terms
   - qualifiers and uncertainty
-editable_scope: local | section | full-document
-output: review | rewrite | review-and-rewrite
+  editable_scope: local | section | full-document
+  output: review | rewrite | review-and-rewrite
 ```
+
+翻译或双语改写再增加：
+
+```yaml
+source_language: language and locale
+target_language: language and locale
+discourse_community: target discipline, industry or institution
+term_map: defined terms and approved equivalents
+alignment: claims, evidence, qualifiers and obligations
+```
+
+`source_language` 与 `target_language` 不只是格式字段；它们决定信息顺序、情态、术语和体裁动作。跨语言修改必须同时保留 `Claim`、`Evidence`、`Source`、`Qualifier` 以及责任主体之间的关系。
 
 ## 保护项
 

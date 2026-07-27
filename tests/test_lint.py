@@ -22,6 +22,15 @@ import office_qa  # noqa: E402
 
 
 class ReviewWriteLintTests(unittest.TestCase):
+    def test_translation_qa_is_bundled_and_preserves_alignment_contract(self) -> None:
+        reference = ROOT / "references" / "translation-qa.md"
+        self.assertTrue(reference.is_file())
+        contents = reference.read_text(encoding="utf-8")
+        self.assertIn("四层保持", contents)
+        self.assertIn("主张、证据、推理依据、反例和限定条件", contents)
+        bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
+        self.assertIn("references/translation-qa.md", bundle_paths)
+
     def test_clean_policy_has_no_findings(self) -> None:
         text = (ROOT / "tests/fixtures/clean_policy.zh.md").read_text(encoding="utf-8")
         self.assertEqual(reviewwrite_lint.lint_text(text), [])

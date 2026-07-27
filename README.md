@@ -60,6 +60,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 ### 核心能力
 
 - 适配论文、基金、政策、报告、公文、备忘录、营销和双语写作；
+- 0.6.0 增加跨语言专业审写：中英互译时保护数字、引用、术语、主张、限定条件和责任边界，并按目标地区、体裁和话语共同体独立审校；
 - 根据语言、读者和真实体裁选择表达，不强套模板；
 - 增加技术解读/产业评论路由：检查模型、推理、设备、内存和性能主张中的叠加式模板信号与技术口径；
 - 默认保护数字、引用、专名、义务和限定条件；
@@ -133,6 +134,8 @@ python3 scripts/office_qa.py path/to/deck.pptx \
 ### 多语言，不只是翻译
 
 当前核心支持 `zh-CN` 和通用专业英语。语言能力使用三个坐标：语言、地区规范和话语共同体。英文不能默认等于美式商业写作，中文也不能默认增加政策口号、谦辞或成语。
+
+0.6.0 开始支持跨语言专业审写：翻译前确认源语言、目标语言、地区规范、体裁、读者和术语；翻译后独立检查数字、引用、主张强度、限定条件、情态和责任边界。它不是逐句替换，也不把回译或流畅度当成专业准确性的证明。详见[跨语言专业审写](references/translation-qa.md)。
 
 新增语言必须经过独立语言包、locale-aware few-shot、事实保持回归和本语种专业 review，才能从 `planned` 进入 `experimental`，再进入 `core`。详见[语言包规范](references/language-packs/README.md)。
 
@@ -209,6 +212,7 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 ### Core capabilities
 
 - genre-aware Chinese and English writing support;
+- cross-language professional review between Chinese and English, preserving terminology, claims, qualifications, and responsibility boundaries across translation;
 - technical commentary review for model, inference, device, memory, and performance claims, including composite template signals and scope checks;
 - context-sensitive routing by language, audience, locale, and discourse community;
 - protection for facts, numbers, citations, names, obligations, and qualifications;
@@ -282,6 +286,8 @@ Use ReviewWrite to revise this academic abstract. Preserve terminology, sample s
 ### Multilingual by design
 
 The current core supports `zh-CN` and general professional English. Language behavior is modeled through three coordinates: language, locale, and discourse community. English is not assumed to mean US business prose, and Chinese is not assumed to require slogans, honorific padding, or idioms.
+
+Version 0.6.0 adds cross-language professional review between Chinese and English: confirm source and target locale, genre, audience, and terminology before translation, then independently check numbers, citations, claim strength, qualifications, modality, and responsibility boundaries. It is not word substitution, and fluency or back-translation is not proof of professional accuracy. See [cross-language professional review](references/translation-qa.md).
 
 A new language must pass a dedicated language pack, locale-aware few-shots, fact-preservation regressions, and professional native-language review before moving from `planned` to `experimental` and then `core`. See the [language-pack specification](references/language-packs/README.md).
 
