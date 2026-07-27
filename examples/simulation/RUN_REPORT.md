@@ -1,8 +1,8 @@
 # ReviewWrite 端到端模拟报告
 
-执行日期：2026-07-22
+执行日期：2026-07-26
 
-Skill 版本：0.2.0
+Skill 版本：0.7.2
 
 执行方式：按已安装的 ReviewWrite Skill 完成 `Review → Plan → Rewrite → Verify`，并使用 `reviewwrite_lint.py --strict` 做确定性泄漏预检。
 
@@ -19,6 +19,16 @@ Skill 版本：0.2.0
 | **合计** | 4 类 | **14 fail / 23 warn** | **0 fail / 0 warn** | **38 项逐字保留** |
 
 检测器只负责定位提示、推理、工具、编辑和聊天残留等确定性信号。修改稿能否成立，还必须经过主张—证据、体裁和限定条件复核。
+
+## 长文档回归
+
+这项回归与上面的四份端到端样本独立：它验证超长 UTF-8 文本的分块、全局定位和索引能力，不把分块预检宣传成完整的跨章节语义审核。
+
+| 输入规模 | 分块参数 | 故意植入的问题 | 验证结果 |
+| ---: | ---: | --- | --- |
+| 324,015 字符、18,002 行 | 6,000 字符/块，128 字符重叠 | 第 9,001 行的模型自述 | 55 块；定位到 L9,001；1 fail / 0 warn |
+
+同时验证：数字 `4.8%` 被收录进全文数字索引，重复段落被收录进重复段落索引。该测试证明的是覆盖、定位和索引链路；事实、引用、法律责任及跨章节主张—证据关系仍需全局模型或人工复核。[查看长文回归测试](../../tests/test_lint.py)
 
 ## 1. 中文学术摘要
 
@@ -120,6 +130,7 @@ Skill 版本：0.2.0
 ```bash
 python3 scripts/reviewwrite_lint.py examples/simulation/inputs/academic-abstract.zh.md --strict
 python3 scripts/reviewwrite_lint.py examples/simulation/outputs/academic-abstract.zh.md --strict
+python3 -m unittest tests.test_lint.ReviewWriteLintTests.test_long_document_review_preserves_global_locations -v
 python3 -m unittest discover -s tests -v
 ```
 
