@@ -267,6 +267,24 @@ RULES: tuple[Rule, ...] = (
         r"the\s+most\s+(?:appealing|interesting)\s+part\s+(?:is|is\s+that)|"
         r"this\s+is\s+(?:also\s+)?the\s+most\s+(?:dangerous|concerning)\s+part)",
     ),
+    Rule(
+        "RW-W-214",
+        "warn",
+        "extreme-importance-label",
+        "极端重要性标签可能用简短口号替代判断标准；请补充比较范围、对象和依据。",
+        r"(?:最硬的一点|最关键的是|最核心的是|真正重要的是|最值得注意的是|"
+        r"绝对不能|毋庸置疑|关键就在于)(?:[^。！？\n]{0,28})",
+    ),
+    Rule(
+        "RW-W-215",
+        "warn",
+        "meta-narrative-packaging",
+        "叙事、故事或底层逻辑可能只是抽象包装；请展开主体、行动、事实链和结果。",
+        r"(?:这(?:是|是一种|背后是|背后有|本质是|核心是|归根结底是)[^。！？\n]{0,24}"
+        r"(?:叙事|故事|底层逻辑|背后逻辑)|"
+        r"(?:叙事|故事|底层逻辑|背后逻辑)[^。！？\n]{0,14}"
+        r"(?:决定|解释|推动|重塑|改变))",
+    ),
 )
 
 

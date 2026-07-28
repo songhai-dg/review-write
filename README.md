@@ -104,6 +104,8 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 | 工作流与聊天收尾 `RW-W-101/RW-W-103` | 过程预告、助手交接语 | “下面我将介绍”“希望这对你有帮助” | `warn`；只清理正文中的过程话术，不改真实对话转写 |
 | 空泛开场与重要性 `RW-W-201/RW-W-202/RW-W-207` | 时代背景、无标准的“重要/关键/全面提升” | “在当今时代”“这件事意义重大” | 改成主体、动作、对象、范围和依据；正式规范词保留 |
 | 公式化转折与悬念 `RW-W-203/RW-W-208` | 二元反转、悬念桥接和重复总结 | “不是……而是……”“换句话说”“最危险的地方” | 单次有逻辑可保留；连续堆叠或不增加信息时 `warn` |
+| 极端重要性标签 `RW-W-214` | “最硬、最关键、绝对不能”等简短排序宣告 | “最硬的一点是效率” | 要求比较范围、判断标准、对象和依据；不能证明排序时改成具体约束 |
+| 元叙事包装 `RW-W-215` | “叙事、故事、底层逻辑”替代事实链或机制 | “这背后是一套新的叙事” | 展开主体、行动、对象、过程和结果；确实讨论传播框架时保留并补定义 |
 | 宣传腔与格式模板 `RW-W-204/RW-W-205` | 空泛赋能、固定卖点、标签式列表 | “全面赋能”“打造新生态” | 结合政策、营销和公文体裁判断，不使用跨体裁禁词 |
 | 技术评论叠加信号 `RW-W-209—RW-W-212` | 模型/推理/设备文本中的反转、重要性、用户泛化、预测和数字 | “这个细节很关键”+“大多数用户”+“更可能” | 只在 `public-article`/`technical-commentary` 语境告警；要求补机制、指标、来源和条件 |
 | 机械枚举 `RW-W-213` | 三个以上句首“第一、第二、第三/首先、其次、最后” | 全文每段都用同一排序节奏 | `warn`；先区分事实、证据、判断、行动；政策条文、方法步骤和正式清单可保留 |
@@ -265,6 +267,8 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Promotional/format template `RW-W-204/RW-W-205` | Empty enablement language, fixed selling points, label lists | “unlock the ecosystem”, bold label blocks | Apply genre-aware review; no cross-genre blacklist |
 | Technical stacked signals `RW-W-209—RW-W-212` | Model/inference/device prose combining contrasts, importance, audience generalization, forecasts, and numbers | “the key detail” + “most users” + “more likely” | Warn only in `public-article`/`technical-commentary`; request mechanism, metrics, sources, and conditions |
 | Mechanical enumeration `RW-W-213` | Three or more sentence-initial ordinal markers | Every paragraph starts “First, Second, Third” | `warn`; distinguish facts, evidence, judgment, and action; retain policy clauses and method steps |
+| Extreme-importance labels `RW-W-214` | Short ranking claims such as “the hardest point” or “absolutely cannot” | “The hardest point is efficiency” | Add comparison scope, standard, object, and evidence; replace unsupported ranking with a concrete constraint |
+| Meta-narrative packaging `RW-W-215` | “Narrative”, “story”, or “underlying logic” replacing a fact chain or mechanism | “Behind this is a new narrative” | Expand actor, action, object, process, and result; define the term when discussing a genuine communication framework |
 
 Coverage includes `zh-CN` and general professional English across papers, grants, public articles, technical commentary, policy, official documents, reports, memos, marketing, and bilingual writing. Findings are review signals, not a “human score” or detector-evasion promise.
 

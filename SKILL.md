@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.7.2
+version: 0.7.3
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -242,6 +242,8 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 
 1. 语义复核：逐项检查事实、数字、引用、专名、限定条件、义务和不确定性；
 2. 交付复核：运行泄漏预检，检查体裁、正文边界、机械表达和聊天式结尾；若此次包含 DOCX/PPTX 交付，再完成相应 Office QA 的结构审计和渲染门禁。
+
+最终输出前必须把 `deliverable_body` 单独送入严格预检：正文文件运行 `python3 scripts/reviewwrite_lint.py <path> --strict`；带四个 surface 标签的响应先解析标签，再只检查其中的 `deliverable_body`。任何 `fail` 或严格模式下的 `warn` 都必须回到修改阶段；若确属授权语境，必须显式声明 `--genre`/`--context` 并在复核报告中说明原因。不能只凭模型自评“已经自然”，也不能只审评审报告而跳过正式正文。
 
 发现漂移时恢复原文或降低修改幅度。存在 blocker 时不得声称完成。
 

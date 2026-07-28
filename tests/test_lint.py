@@ -118,6 +118,20 @@ class ReviewWriteLintTests(unittest.TestCase):
         revised = "评估重点不应是摘要速度，而应是是否保留退款期限。"
         self.assertEqual(reviewwrite_lint.lint_text(revised), [])
 
+    def test_extreme_importance_labels_are_review_signals(self) -> None:
+        draft = "最硬的一点是效率，最关键的是速度，绝对不能忽略规模。"
+        findings = reviewwrite_lint.lint_text(draft)
+        self.assertIn("RW-W-214", {item.rule_id for item in findings})
+        revised = "效率是该方案落地的主要约束，原因是现有流程需要逐项人工核验。"
+        self.assertNotIn("RW-W-214", {item.rule_id for item in reviewwrite_lint.lint_text(revised)})
+
+    def test_meta_narrative_packaging_is_a_review_signal(self) -> None:
+        draft = "这背后是一套新的叙事，底层逻辑决定了行业未来。"
+        findings = reviewwrite_lint.lint_text(draft)
+        self.assertIn("RW-W-215", {item.rule_id for item in findings})
+        revised = "材料把成本下降归因于流程重组，并列出三项可核对的操作变化。"
+        self.assertNotIn("RW-W-215", {item.rule_id for item in reviewwrite_lint.lint_text(revised)})
+
     def test_technical_commentary_detects_stacked_signals(self) -> None:
         draft = (
             "这是一个 34.66B 参数的稀疏 MoE 模型，每个 token 激活约 3B 参数。"
