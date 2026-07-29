@@ -10,7 +10,7 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 SKILL_ID = "reviewwrite"
 
 
@@ -22,6 +22,7 @@ def bundle_files() -> list[Path]:
         ROOT / "scripts" / "office_qa.py",
         ROOT / "scripts" / "reviewwrite_update.py",
         ROOT / "scripts" / "long_document_review.py",
+        ROOT / "scripts" / "reviewwrite_route.py",
         ROOT / "release-policy.json",
         ROOT / "examples" / "office-qa" / "font-profile.example.json",
     ]

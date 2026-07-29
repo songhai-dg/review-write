@@ -31,6 +31,7 @@ REQUIRED_FILES = (
     "references/language-packs/zh-CN.md",
     "references/language-packs/en.md",
     "references/platforms.md",
+    "references/agent-handoff.md",
     "references/update-policy.md",
     "references/quickstart.md",
     "references/office-qa.md",
@@ -50,11 +51,15 @@ REQUIRED_FILES = (
     "scripts/print_install_prompt.py",
     "scripts/render_release_notes.py",
     "scripts/office_qa.py",
+    "scripts/long_document_review.py",
+    "scripts/reviewwrite_route.py",
 )
 
 
 def validate() -> list[str]:
     errors: list[str] = []
+    skill_text = ""
+    readme = ""
 
     for relative in REQUIRED_FILES:
         if not (ROOT / relative).is_file():
@@ -84,6 +89,12 @@ def validate() -> list[str]:
             if not (ROOT / target).exists():
                 errors.append(f"SKILL.md 链接不存在: {target}")
 
+        for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", readme):
+            if target.startswith(("http://", "https://", "#")):
+                continue
+            if not (ROOT / target).exists():
+                errors.append(f"README.md 链接不存在: {target}")
+
     try:
         import print_install_prompt
 
@@ -107,11 +118,6 @@ def validate() -> list[str]:
     if skill_path.is_file() and "natural_language_aliases: [\"审写\", \"ReviewWrite\"]" not in skill_text:
         errors.append("SKILL.md 缺少审写与 ReviewWrite 的自然语言简称声明")
 
-        for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", readme):
-            if target.startswith(("http://", "https://", "#")):
-                continue
-            if not (ROOT / target).exists():
-                errors.append(f"README.md 链接不存在: {target}")
 
     genre_dir = ROOT / "references" / "genre-packs"
     genre_files = sorted(genre_dir.glob("*.md")) if genre_dir.is_dir() else []

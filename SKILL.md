@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.8.0
+version: 0.8.1
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -38,7 +38,7 @@ platforms: [linux, macos, windows]
 
 ## 宿主智能体协同
 
-对写作、改写、翻译、长文整理和正式文案任务，宿主智能体应把 ReviewWrite 接入生成前和交付前，而不是只在用户明确输入 `/reviewwrite` 时调用。详细交接字段、触发边界、状态和有限回改协议见 [references/agent-handoff.md](references/agent-handoff.md)。
+宿主智能体先运行风险路由，再决定是否接入 ReviewWrite：正式论文、报告、公文、政策、营销和超长文档为高风险，必须接入；普通正文任务为中风险，建议接入；事实问答、命令和格式操作不必接入。被接入后，最终门禁必须执行。可执行路由、交接字段、状态和有限回改协议见 [references/agent-handoff.md](references/agent-handoff.md)。
 
 最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Final gate → Repair（最多两轮）→ Deliver`。用户只要正文时，交接信息和评审过程保持内部可用，不混入正文；用户要求评审时，再按四个 surface 输出。
 
