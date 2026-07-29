@@ -37,6 +37,19 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertIn("scripts/reviewwrite_update.py", bundle_paths)
         self.assertIn("release-policy.json", bundle_paths)
 
+    def test_agent_handoff_contract_is_bundled_and_host_prompt_is_gated(self) -> None:
+        handoff = ROOT / "references" / "agent-handoff.md"
+        self.assertTrue(handoff.is_file())
+        contents = handoff.read_text(encoding="utf-8")
+        self.assertIn("Preflight", contents)
+        self.assertIn("Final gate", contents)
+        self.assertIn("最多两轮", contents)
+        bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
+        self.assertIn("references/agent-handoff.md", bundle_paths)
+        host_prompt = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("交付前", host_prompt)
+        self.assertIn("最多回改两轮", host_prompt)
+
     def test_long_document_review_preserves_global_locations(self) -> None:
         paragraph = "普通正文。这里保留上下文和限定条件，不能只看局部，审核结论还需要回到原始证据和适用范围。"
         text = ((paragraph + "\n\n") * 4500)

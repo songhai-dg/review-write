@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.7.3
+version: 0.8.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -35,6 +35,12 @@ platforms: [linux, macos, windows]
 - 唯一技术 Skill ID 是 `reviewwrite`；支持 slash 调用的平台应使用 `/reviewwrite`。
 - “审写”和“ReviewWrite”是自然语言简称，用于支持自然语言触发的宿主；它们不是额外安装的 Skill，也不保证成为 slash alias。
 - 不要同时安装 `review-write` 和 `reviewwrite`。旧标识属于迁移前版本；检测到旧目录时先报告路径并由用户决定迁移或删除，避免重复规则加载。
+
+## 宿主智能体协同
+
+对写作、改写、翻译、长文整理和正式文案任务，宿主智能体应把 ReviewWrite 接入生成前和交付前，而不是只在用户明确输入 `/reviewwrite` 时调用。详细交接字段、触发边界、状态和有限回改协议见 [references/agent-handoff.md](references/agent-handoff.md)。
+
+最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Final gate → Repair（最多两轮）→ Deliver`。用户只要正文时，交接信息和评审过程保持内部可用，不混入正文；用户要求评审时，再按四个 surface 输出。
 
 ## 设计原则：固定边界，动态判断
 
