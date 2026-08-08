@@ -168,6 +168,17 @@ RULES: tuple[Rule, ...] = (
         r"working\s+tree|内部(?:skill|agent|route|模块|路由))",
     ),
     Rule(
+        "RW-F-006",
+        "fail",
+        "internal-contract-leakage",
+        "正文疑似暴露只供宿主或编辑流程使用的内部契约术语；交付稿应直接给出读者可用的事实、结论或建议。",
+        r"(?:证据边界|保留(?:约束|项)|验收标准|交付(?:正文|表面)|审写协议|评审协议|"
+        r"内部(?:状态|规则|契约|协议|检查清单)|回改(?:一|两|三)?轮|最终门禁|严格终检|"
+        r"写前预检|正文抽取|deliverable[_ -]?body|review[_ -]?report|revision[_ -]?plan|"
+        r"verification[_ -]?report|preflight(?:\s+check)?|final\s+gate|repair\s+loop|"
+        r"evidence\s+boundary|preserve\s+constraints?|acceptance\s+criteria)",
+    ),
+    Rule(
         "RW-W-101",
         "warn",
         "process-narration",
@@ -441,6 +452,8 @@ CONTEXT_PROFILES: frozenset[str] = frozenset(
         "ai-disclosure",
         "dialogue-transcript",
         "editorial-audit",
+        "legal-analysis",
+        "research-methods",
     }
 )
 
@@ -468,6 +481,8 @@ EXEMPTIONS: tuple[Exemption, ...] = (
     Exemption("prompt-engineering", "RW-F-001", "downgrade", "提示模板本身就是正文内容"),
     Exemption("prompt-engineering", "RW-F-005", "downgrade", "工具与模块名是提示工程内容"),
     Exemption("software-docs", "RW-F-005", "downgrade", "skill/agent/route/模块名是文档主题"),
+    Exemption("legal-analysis", "RW-F-006", "ignore", "法律分析可以在正文中讨论证据范围和证明标准"),
+    Exemption("research-methods", "RW-F-006", "ignore", "研究方法正文可以讨论证据边界和验收标准本身"),
     # An acknowledgement or methods statement may disclose AI assistance.
     Exemption("ai-disclosure", "RW-F-003", "downgrade", "AI 辅助披露声明可合法提及模型身份"),
     # A transcript's content is exactly chat turns and closings.

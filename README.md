@@ -104,6 +104,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 | 模型自述 `RW-F-003` | AI/语言模型身份和能力免责声明 | “作为一个 AI……” | 正文 `blocker`；合法的 AI 辅助披露可声明语境后复核 |
 | 任务与编辑残留 `RW-F-004/RW-W-102` | 用户要求、改稿待办、版本过程 | “根据用户要求”“待补充”“下一轮修改” | 任务复述和编辑指令不得进入正文；评审报告可以引用 |
 | 工具/运行时残留 `RW-F-005` | 工具调用、Skill、Agent、内部路径和路由 | “我调用了工具”“SKILL.md”“working tree” | 正文 `blocker`；软件文档或审计报告需声明讨论语境 |
+| 内部契约术语 `RW-F-006` | 只供宿主/编辑流程使用的证据边界、验收标准、终检和 surface 名称 | “证据边界”“最终门禁”“deliverable_body” | 普通正文 `blocker`；法律分析、研究方法、软件文档等确实讨论该概念时声明授权语境 |
 | 工作流与聊天收尾 `RW-W-101/RW-W-103` | 过程预告、助手交接语 | “下面我将介绍”“希望这对你有帮助” | `warn`；只清理正文中的过程话术，不改真实对话转写 |
 | 空泛开场与重要性 `RW-W-201/RW-W-202/RW-W-207` | 时代背景、无标准的“重要/关键/全面提升” | “在当今时代”“这件事意义重大” | 改成主体、动作、对象、范围和依据；正式规范词保留 |
 | 公式化转折与悬念 `RW-W-203/RW-W-208` | 二元反转、悬念桥接和重复总结 | “不是……而是……”“换句话说”“最危险的地方” | 单次有逻辑可保留；连续堆叠或不增加信息时 `warn` |
@@ -264,6 +265,7 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Model self-description `RW-F-003` | AI identity and capability disclaimers | “As an AI…” | `blocker`; authorized disclosure is reviewed in context |
 | Task/editor residue `RW-F-004/RW-W-102` | User-task recap, TODOs, revision workflow | “based on the user request”, “TODO” | Remove from deliverables; review reports may quote the span |
 | Tool/runtime residue `RW-F-005` | Tool calls, Skill/Agent names, internal paths and routes | `tool call`, `SKILL.md`, `working tree` | `blocker` in deliverables; software docs/audits declare their context |
+| Internal contract residue `RW-F-006` | Host/editor-only terms such as evidence boundary, acceptance criteria, final gate, and surface names | `evidence boundary`, `final gate`, `deliverable_body` | `blocker` in ordinary deliverables; declare an authorized subject context when the concept itself is being discussed |
 | Workflow/chat handoff `RW-W-101/RW-W-103` | Process previews and assistant closings | “This section will…”, “Hope this helps” | `warn`; does not rewrite genuine dialogue transcripts |
 | Empty opening/significance `RW-W-201/RW-W-202/RW-W-207` | Generic era framing and unsupported emphasis | “in today’s world”, “highly significant” | Replace with actor, action, scope, standard, and evidence; preserve formal normative terms |
 | Formulaic contrast/bridge `RW-W-203/RW-W-208` | Binary reversals, suspense bridges, repeated summaries | “not X but Y”, “in other words”, “the most dangerous part” | One functional contrast may stay; stacked or empty uses warn |

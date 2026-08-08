@@ -145,6 +145,21 @@ class ReviewWriteLintTests(unittest.TestCase):
         revised = "材料把成本下降归因于流程重组，并列出三项可核对的操作变化。"
         self.assertNotIn("RW-W-215", {item.rule_id for item in reviewwrite_lint.lint_text(revised)})
 
+    def test_internal_contract_terms_are_blocked_in_deliverable_text(self) -> None:
+        draft = "# 证据边界与验收标准\n本节将说明 preserve constraints，最后执行 final gate。"
+        findings = reviewwrite_lint.lint_text(draft)
+        self.assertIn("RW-F-006", {item.rule_id for item in findings})
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings), 1)
+
+    def test_internal_contract_terms_can_be_authorized_when_they_are_the_subject(self) -> None:
+        text = "法律分析应明确证据边界，并说明各项证明标准的适用范围。"
+        findings = reviewwrite_lint.lint_text(text, profiles=["legal-analysis"])
+        self.assertNotIn("RW-F-006", {item.rule_id for item in findings})
+
+    def test_internal_contract_terms_do_not_flag_ordinary_evidence_language(self) -> None:
+        text = "现有材料支持该结论，但样本范围不足以推出全国性判断。"
+        self.assertNotIn("RW-F-006", {item.rule_id for item in reviewwrite_lint.lint_text(text)})
+
     def test_technical_commentary_detects_stacked_signals(self) -> None:
         draft = (
             "这是一个 34.66B 参数的稀疏 MoE 模型，每个 token 激活约 3B 参数。"
