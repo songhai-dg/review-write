@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewwrite_version": "0.8.2",
+  "reviewwrite_version": "0.8.3",
   "format": "agentskills.io-compatible",
   "python_requirement": ">=3.10",
   "skill_id": "reviewwrite",
@@ -11,7 +11,7 @@
   ],
   "alias_boundary": "Aliases are natural-language triggers only; only reviewwrite is a technical Skill ID and slash invocation.",
   "maintainer": "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）",
-  "checked_at": "2026-07-21",
+  "checked_at": "2026-08-08",
   "language_support": {
     "core": [
       "zh-CN",

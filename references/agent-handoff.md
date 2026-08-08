@@ -8,9 +8,11 @@ ReviewWrite 不是只能被用户手动点名的末端工具，但也不应拦�
 
 ```bash
 python3 scripts/reviewwrite_route.py --task-type rewrite --genre research-report --format json
+python3 scripts/reviewwrite_route.py --task-type translate --language bilingual --format json
+python3 scripts/reviewwrite_route.py --task-type office-audit --format json
 ```
 
-路由返回三档结果：高风险 `required`（正式体裁、证据/保留约束或十万字及以上长文）、中风险 `suggested`（普通正文生成、改写、翻译或总结）和低风险 `not-needed`（事实问答、概念解释、命令、格式操作）。用户明确跳过时返回 `skipped_by_user`，宿主不得声称已经审写。只要实际接入，终检就是必需项，失败最多定向回改两轮。
+路由返回三档结果：高风险 `required`（正式体裁、双语专业文本、证据/保留约束、Office 审计或十万字及以上长文）、中风险 `suggested`（普通正文生成、改写、翻译或总结）和低风险 `not-needed`（事实问答、概念解释、命令、格式操作）。用户明确跳过时返回 `skipped_by_user`，宿主不得声称已经审写。路由只给出决策，不等于已经运行 ReviewWrite；只要实际接入，终检就是必需项，失败最多定向回改两轮。
 
 ## 触发边界
 
@@ -23,7 +25,6 @@ python3 scripts/reviewwrite_route.py --task-type rewrite --genre research-report
 ### 中风险：建议接入
 
 - 用户要求写作、改写、润色、总结成稿、翻译、扩写、压缩或发布文案；
-- 用户要求“去 AI 味”“自然一点”但仍然需要正式交付。
 - 用户要求“去 AI 味”“自然一点”但仍然需要正式交付。
 
 ### 不必自动接入
@@ -63,8 +64,8 @@ Detect → Preflight → Draft → Extract → Final gate → Repair (max 2) →
 1. `Detect`：宿主判断是否属于写作交付任务，并选择语言、体裁和读者。
 2. `Preflight`：ReviewWrite 输出 preserve、repair、evidence_boundary 和 acceptance；没有足够信息时缩小修改范围。
 3. `Draft`：宿主依据契约生成文本，不能把评审报告、计划或工具过程写进正文。
-4. `Extract`：从结构化响应中抽取唯一的 `deliverable_body`；只要正文，不向用户展示内部交接信息。
-5. `Final gate`：对抽取后的正文运行严格预检，并复核数字、引用、专名、限定条件、义务和主张强度。
+4. `Extract`：从结构化响应中抽取唯一的 `deliverable_body`；只要正文，不向用户展示标签和内部交接信息。
+5. `Final gate`：运行 `python3 scripts/reviewwrite_gate.py <response-path>`。它负责严格抽取与预检；通过时只输出正文，失败时不输出正文。纯正文输入必须显式添加 `--input-mode raw`。
 6. `Repair`：出现 `fail` 或严格模式下的 `warn` 时，只针对触发句回改，最多两轮；不得用删掉事实或降低信息密度来换取通过。
 7. `Deliver`：通过后按用户要求返回正文；用户要求评审时才返回四个 surface。
 
@@ -86,6 +87,20 @@ Detect → Preflight → Draft → Extract → Final gate → Repair (max 2) →
 ```
 
 `blocked` 表示仍有硬失败、事实无法核验、结构化正文无法抽取或两轮回改后仍未通过。此时宿主应报告触发原因和待确认项，不得把未通过正文伪装成完成稿。
+
+## 可执行交付门禁
+
+```bash
+# 结构化响应：默认且推荐
+python3 scripts/reviewwrite_gate.py response.txt
+
+# 已确认文件只包含正文时
+python3 scripts/reviewwrite_gate.py body.txt --input-mode raw
+```
+
+宿主只能使用命令成功后的标准输出作为最终正文。退出码非零时，标准输出为空；诊断写入标准错误，供定向回改使用。路由 JSON、模型自评或“已审核”字样都不能替代这一步。
+
+若正文确实讨论 AI 安全、软件接口或其他授权对象，先用 `--context` 声明；由该语境降级的警告仍默认阻断。只有宿主已经逐条确认术语确属讨论对象时，才可加 `--confirm-context-warnings`。该开关不放行普通风格警告或任何硬失败。
 
 ## 版本与会话刷新
 

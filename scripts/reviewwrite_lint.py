@@ -17,6 +17,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+from runtime_io import configure_utf8_stdio
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -296,6 +298,29 @@ RULES: tuple[Rule, ...] = (
         r"(?:叙事|故事|底层逻辑|背后逻辑)[^。！？\n]{0,14}"
         r"(?:决定|解释|推动|重塑|改变))",
     ),
+    Rule(
+        "RW-W-216",
+        "warn",
+        "discourse-filler",
+        "连接语可能只是在提示读者“注意”，却没有增加信息；请直接写事实或判断。",
+        r"(?:值得注意的是|需要指出的是|可以看出|it\s+is\s+worth\s+noting(?:\s+that)?|"
+        r"it\s+should\s+be\s+noted(?:\s+that)?)(?:[，,:：])?",
+    ),
+    Rule(
+        "RW-W-217",
+        "warn",
+        "redundant-summary",
+        "总结标记可能重复前文或越过证据拔高；只保留新增结论及其适用范围。",
+        r"(?:总的来说|归根结底|由此可见|all\s+in\s+all|in\s+conclusion)(?:[，,:：])?",
+    ),
+    Rule(
+        "RW-W-219",
+        "warn",
+        "translationese",
+        "句子疑似保留了生硬的跨语言结构；请按目标语言的主谓宾和信息顺序重写。",
+        r"(?:对于[^，。！？\n]{1,24}而言[，,][^。！？\n]{0,28}进行(?:了)?一个|"
+        r"进行(?:了)?一个[^。！？\n]{1,32}(?:分析|评估|讨论|研究|判断|说明))",
+    ),
 )
 
 
@@ -338,6 +363,28 @@ ENUMERATION_MARKERS = re.compile(
     r"(?=[、，,.:：．.\s])",
     re.IGNORECASE,
 )
+INFERENCE_MARKERS = re.compile(
+    r"(?:我们可以看到|我们能够看到|这说明|这表明|we\s+can\s+see(?:\s+that)?|"
+    r"this\s+(?:shows|indicates)(?:\s+that)?)(?:[，,:：])?",
+    re.IGNORECASE,
+)
+VAGUE_AUTHORITY = re.compile(
+    r"(?:(?:研究|调查|数据|统计)(?:结果)?(?:表明|显示|发现)|"
+    r"(?:专家|业内人士|业界|学界)(?:普遍)?(?:认为|指出|表示)|"
+    r"(?:studies|research|surveys?|data|statistics)\s+(?:show|shows|suggest|suggests|indicate|indicates)|"
+    r"experts?\s+(?:believe|argue|say))",
+    re.IGNORECASE,
+)
+CITATION_SIGNAL = re.compile(
+    r"(?:\[[0-9,，;；\-–— ]+\]|（[^）\n]{0,50}\d{4}[^）\n]*）|"
+    r"\([^\)\n]{0,50}\d{4}[^\)\n]*\)|来源\s*[:：]|doi\s*[:：]?|https?://)",
+    re.IGNORECASE,
+)
+SYMMETRIC_STRUCTURES = re.compile(
+    r"(?:既要[^。！？；;\n]{1,60}也要|从[^。！？；;\n]{1,24}到[^。！？；;\n]{1,24}(?=[，。！？；;])|"
+    r"both\s+[^.?!;\n]{1,60}\s+and\s+[^.?!;\n]{1,60}(?=[.?!;]))",
+    re.IGNORECASE,
+)
 
 
 def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
@@ -345,26 +392,12 @@ def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
 
 
 def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
-    """Find stacked signals without treating individual phrases as errors.
+    """Find source/syntax stacks without treating every individual phrase as an error.
 
-    Composite findings are enabled only for technical prose. This keeps a
-    legitimate contrast in a policy or academic text from being penalized while
-    catching the short, high-density pattern found in AI-generated tech posts.
+    Authority, inference-narration, and symmetry checks apply across prose.
+    Technical contrast and scope composites remain limited to public articles
+    and technical commentary.
     """
-    if not ({"public-article", "technical-commentary"} & profiles):
-        return []
-
-    is_technical = bool(TECHNICAL_TERMS.search(text))
-    contrasts = list(COMPOSITE_CONTRASTS.finditer(text))
-    importance = list(IMPORTANCE_SIGNALS.finditer(text))
-    audience = list(AUDIENCE_SIGNALS.finditer(text))
-    forecasts = list(FORECAST_SIGNALS.finditer(text))
-    enum_markers = [
-        match
-        for match in ENUMERATION_MARKERS.finditer(text)
-        if not text[: match.start()].rstrip()
-        or text[: match.start()].rstrip()[-1] in "。！？\n"
-    ]
     findings: list[Finding] = []
 
     def add(
@@ -385,6 +418,59 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                 excerpt=_excerpt_for(text, match.start()),
             )
         )
+
+    inference_markers = list(INFERENCE_MARKERS.finditer(text))
+    if len(inference_markers) >= 2:
+        add(
+            "RW-W-220",
+            "inference-narration-stacking",
+            "短文本连续使用“我们可以看到/这说明/这表明”推进判断；请直接写可验证事实和推论条件。",
+            inference_markers[0],
+        )
+
+    for match in VAGUE_AUTHORITY.finditer(text):
+        sentence_start = max(
+            text.rfind(mark, 0, match.start())
+            for mark in ("。", "！", "？", ".", "!", "?", "\n")
+        ) + 1
+        sentence_end_candidates = []
+        for mark in ("。", "！", "？", ".", "!", "?", "\n"):
+            position = text.find(mark, match.end())
+            if position >= 0:
+                sentence_end_candidates.append(position)
+        sentence_end = min(sentence_end_candidates) if sentence_end_candidates else len(text)
+        context = text[sentence_start:sentence_end]
+        if not CITATION_SIGNAL.search(context):
+            add(
+                "RW-W-218",
+                "vague-authority",
+                "“研究表明/专家认为”等归因没有可定位来源；补充真实引用，否则改为有限判断。",
+                match,
+            )
+
+    symmetric_structures = list(SYMMETRIC_STRUCTURES.finditer(text))
+    if len(symmetric_structures) >= 2:
+        add(
+            "RW-W-221",
+            "symmetric-structure-stacking",
+            "短文本连续使用对称句式，可能以形式完整替代信息取舍；请按事实、判断和行动重组。",
+            symmetric_structures[0],
+        )
+
+    if not ({"public-article", "technical-commentary"} & profiles):
+        return findings
+
+    is_technical = bool(TECHNICAL_TERMS.search(text))
+    contrasts = list(COMPOSITE_CONTRASTS.finditer(text))
+    importance = list(IMPORTANCE_SIGNALS.finditer(text))
+    audience = list(AUDIENCE_SIGNALS.finditer(text))
+    forecasts = list(FORECAST_SIGNALS.finditer(text))
+    enum_markers = [
+        match
+        for match in ENUMERATION_MARKERS.finditer(text)
+        if not text[: match.start()].rstrip()
+        or text[: match.start()].rstrip()[-1] in "。！？\n"
+    ]
 
     if is_technical and len(contrasts) >= 2:
         add(
@@ -443,6 +529,17 @@ class Exemption:
     rationale: str
 
 
+@dataclass(frozen=True)
+class MatchExemption:
+    """A narrow exemption that applies only to the matched phrase."""
+
+    profile: str
+    rule_id: str
+    pattern: str
+    action: str
+    rationale: str
+
+
 # Topic/context profiles authorized by references/leakage.md "允许出现的情况".
 CONTEXT_PROFILES: frozenset[str] = frozenset(
     {
@@ -481,8 +578,8 @@ EXEMPTIONS: tuple[Exemption, ...] = (
     Exemption("prompt-engineering", "RW-F-001", "downgrade", "提示模板本身就是正文内容"),
     Exemption("prompt-engineering", "RW-F-005", "downgrade", "工具与模块名是提示工程内容"),
     Exemption("software-docs", "RW-F-005", "downgrade", "skill/agent/route/模块名是文档主题"),
-    Exemption("legal-analysis", "RW-F-006", "ignore", "法律分析可以在正文中讨论证据范围和证明标准"),
-    Exemption("research-methods", "RW-F-006", "ignore", "研究方法正文可以讨论证据边界和验收标准本身"),
+    Exemption("software-docs", "RW-F-006", "downgrade", "软件文档可能说明输出字段和终检协议"),
+    Exemption("editorial-audit", "RW-F-006", "downgrade", "编辑审计可能引用内部契约术语作为问题证据"),
     # An acknowledgement or methods statement may disclose AI assistance.
     Exemption("ai-disclosure", "RW-F-003", "downgrade", "AI 辅助披露声明可合法提及模型身份"),
     # A transcript's content is exactly chat turns and closings.
@@ -501,6 +598,24 @@ EXEMPTIONS: tuple[Exemption, ...] = (
     Exemption("public-article", "RW-W-205", "ignore", "公众号常用加粗小标题分节"),
     Exemption("research-report", "RW-W-205", "ignore", "研究报告常用结构化要点"),
     Exemption("marketing-copy", "RW-W-205", "ignore", "营销文案常用加粗卖点列表"),
+)
+
+
+MATCH_EXEMPTIONS: tuple[MatchExemption, ...] = (
+    MatchExemption(
+        "legal-analysis",
+        "RW-F-006",
+        r"^(?:证据边界|验收标准|evidence\s+boundary|acceptance\s+criteria)$",
+        "ignore",
+        "法律分析可以讨论证据范围和证明标准本身",
+    ),
+    MatchExemption(
+        "research-methods",
+        "RW-F-006",
+        r"^(?:证据边界|验收标准|evidence\s+boundary|acceptance\s+criteria)$",
+        "ignore",
+        "研究方法可以讨论证据边界和验收标准本身",
+    ),
 )
 
 
@@ -523,6 +638,19 @@ def _resolve_action(rule_id: str, active: frozenset[str]) -> tuple[str | None, s
     if downgrade_profile is not None:
         return "downgrade", downgrade_profile
     return None, None
+
+
+def _resolve_match_action(
+    rule_id: str,
+    matched_text: str,
+    active: frozenset[str],
+) -> tuple[str | None, str | None]:
+    for exemption in MATCH_EXEMPTIONS:
+        if exemption.rule_id != rule_id or exemption.profile not in active:
+            continue
+        if re.fullmatch(exemption.pattern, matched_text, re.IGNORECASE):
+            return exemption.action, exemption.profile
+    return _resolve_action(rule_id, active)
 
 
 def _line_and_column(text: str, offset: int) -> tuple[int, int]:
@@ -554,10 +682,14 @@ def lint_text(
     for rule in RULES:
         if rule.rule_id in ignored:
             continue
-        action, profile = _resolve_action(rule.rule_id, active) if active else (None, None)
-        if action == "ignore":
-            continue
         for match in re.finditer(rule.pattern, text, rule.flags):
+            action, profile = (
+                _resolve_match_action(rule.rule_id, match.group(0), active)
+                if active
+                else (None, None)
+            )
+            if action == "ignore":
+                continue
             key = (rule.rule_id, match.start())
             if key in seen:
                 continue
@@ -699,6 +831,7 @@ def _render_profiles() -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args(argv)
 

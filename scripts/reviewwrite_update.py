@@ -23,10 +23,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
+from runtime_io import configure_utf8_stdio
+
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.8.2"
+USER_AGENT = "ReviewWrite-Updater/0.8.3"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 
@@ -229,6 +231,8 @@ def download_verified(
                 check=True,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
             )
         package_part.replace(package_path)
         checksum_part.replace(checksum_path)
@@ -252,6 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     args = build_parser().parse_args(argv)
     try:
         config = load_policy()

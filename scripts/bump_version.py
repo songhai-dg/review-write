@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Sequence
 
 from reviewwrite_update import Version
+from runtime_io import configure_utf8_stdio
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,8 +34,15 @@ def current_versions() -> dict[str, str]:
         "SKILL.md": re.search(r"(?m)^version: ([^\n]+)$", skill).group(1),
         "package_skill.py": re.search(r'(?m)^VERSION = "([^"]+)"$', package).group(1),
         "reviewwrite_update.py": re.search(r'ReviewWrite-Updater/([0-9.]+)', updater).group(1),
-        "compatibility.json": json.loads((ROOT / "compatibility.json").read_text())["reviewwrite_version"],
-        "release-policy.json": json.loads((ROOT / "release-policy.json").read_text())["current_version"],
+        "compatibility.json": json.loads(
+            (ROOT / "compatibility.json").read_text(encoding="utf-8")
+        )["reviewwrite_version"],
+        "release-policy.json": json.loads(
+            (ROOT / "release-policy.json").read_text(encoding="utf-8")
+        )["current_version"],
+        "automation/pilot-state.json": json.loads(
+            (ROOT / "automation" / "pilot-state.json").read_text(encoding="utf-8")
+        )["current_version"],
     }
 
 
@@ -70,6 +78,7 @@ def apply(current: Version, target: Version) -> None:
     for filename, key in (
         ("compatibility.json", "reviewwrite_version"),
         ("release-policy.json", "current_version"),
+        ("automation/pilot-state.json", "current_version"),
     ):
         path = ROOT / filename
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -78,6 +87,7 @@ def apply(current: Version, target: Version) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="预览或同步 ReviewWrite 版本")
     parser.add_argument("kind", choices=("patch", "minor", "major"))
     parser.add_argument("--apply", action="store_true", help="实际修改；默认只预览")

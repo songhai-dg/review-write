@@ -10,6 +10,7 @@ and duplicate-paragraph signals for documents too large for one prompt pass.
 from __future__ import annotations
 
 import argparse
+import bisect
 import hashlib
 import json
 import re
@@ -20,15 +21,22 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 import reviewwrite_lint
+from runtime_io import configure_utf8_stdio
 
 
 DEFAULT_MAX_CHARS = 12000
 DEFAULT_OVERLAP = 256
+MAX_OUTPUT_FINDINGS = 5000
+MAX_OUTPUT_HEADINGS = 5000
+MAX_OUTPUT_INDEX_ENTRIES = 5000
+MAX_OUTPUT_DUPLICATE_GROUPS = 1000
 NUMBER_PATTERN = re.compile(
-    r"(?<![\w.])(?:\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?:\s*[%％]|\s*[万亿千万])?(?![\w.])"
+    r"(?<![A-Za-z0-9_.])(?:\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)"
+    r"(?:\s*(?:亿元|万元|公里|平方公里|百分比|%|％|万|亿|千|百|年|月|日|个|人|家|项|元))?"
+    r"(?![A-Za-z0-9_.])"
 )
 ASCII_TERM_PATTERN = re.compile(r"\b[A-Za-z][A-Za-z0-9_-]{2,40}\b")
-HEADING_PATTERN = re.compile(r"(?m)^\s{0,3}#{1,6}\s+(.+?)\s*$")
+HEADING_PATTERN = re.compile(r"(?m)^[ \t]{0,3}#{1,6}[ \t]+(.+?)[ \t]*$")
 
 
 @dataclass(frozen=True)
@@ -49,10 +57,14 @@ def _excerpt(text: str, offset: int, limit: int = 180) -> str:
     return value if len(value) <= limit else value[: limit - 1] + "…"
 
 
-def _line_column(text: str, offset: int) -> tuple[int, int]:
-    line = text.count("\n", 0, offset) + 1
-    previous = text.rfind("\n", 0, offset)
-    return line, offset + 1 if previous < 0 else offset - previous
+def _line_starts(text: str) -> list[int]:
+    """Build one reusable offset map for large-document location lookups."""
+    return [0, *(match.end() for match in re.finditer("\n", text))]
+
+
+def _indexed_line_column(starts: Sequence[int], offset: int) -> tuple[int, int]:
+    index = max(0, bisect.bisect_right(starts, offset) - 1)
+    return index + 1, offset - starts[index] + 1
 
 
 def split_chunks(
@@ -60,7 +72,7 @@ def split_chunks(
     max_chars: int = DEFAULT_MAX_CHARS,
     overlap: int = DEFAULT_OVERLAP,
 ) -> list[Chunk]:
-    """Split at paragraph/line boundaries and add bounded context overlap."""
+    """Prefer chapter headings, then paragraph/line boundaries, with overlap."""
     if max_chars < 1000:
         raise ValueError("max_chars 必须至少为 1000")
     if overlap < 0 or overlap >= max_chars:
@@ -76,13 +88,22 @@ def split_chunks(
         target = min(start + max_chars, length)
         end = target
         if target < length:
-            paragraph_break = text.rfind("\n\n", start, target)
-            if paragraph_break > start + max_chars // 3:
-                end = paragraph_break + 2
+            minimum_break = start + max_chars // 3
+            heading_breaks = [
+                match.start()
+                for match in HEADING_PATTERN.finditer(text, minimum_break, target)
+                if match.start() > start
+            ]
+            if heading_breaks:
+                end = heading_breaks[-1]
             else:
-                line_break = text.rfind("\n", start, target)
-                if line_break > start:
-                    end = line_break + 1
+                paragraph_break = text.rfind("\n\n", start, target)
+                if paragraph_break > minimum_break:
+                    end = paragraph_break + 2
+                else:
+                    line_break = text.rfind("\n", start, target)
+                    if line_break > start:
+                        end = line_break + 1
         if end <= start:
             end = target
         context_start = max(0, start - overlap)
@@ -106,6 +127,7 @@ def _global_findings(
     chunk_text: str,
     profiles: Iterable[str],
     ignored_rules: Iterable[str],
+    line_starts: Sequence[int],
 ) -> list[dict[str, object]]:
     findings = reviewwrite_lint.lint_text(
         chunk_text,
@@ -118,7 +140,7 @@ def _global_findings(
         global_offset = chunk.context_start + local_offset
         if not chunk.start <= global_offset < chunk.end:
             continue
-        line, column = _line_column(full_text, global_offset)
+        line, column = _indexed_line_column(line_starts, global_offset)
         item = asdict(finding)
         item.update(
             {
@@ -132,11 +154,15 @@ def _global_findings(
     return output
 
 
-def _number_index(text: str) -> list[dict[str, object]]:
+def _number_index(
+    text: str,
+    line_starts: Sequence[int] | None = None,
+) -> list[dict[str, object]]:
+    starts = line_starts if line_starts is not None else _line_starts(text)
     index: dict[str, dict[str, object]] = {}
     for match in NUMBER_PATTERN.finditer(text):
         value = match.group(0).strip()
-        line, column = _line_column(text, match.start())
+        line, column = _indexed_line_column(starts, match.start())
         entry = index.setdefault(value, {"value": value, "count": 0, "locations": []})
         entry["count"] = int(entry["count"]) + 1
         locations = entry["locations"]
@@ -146,7 +172,11 @@ def _number_index(text: str) -> list[dict[str, object]]:
     return sorted(index.values(), key=lambda item: str(item["value"]))
 
 
-def _term_variants(text: str) -> list[dict[str, object]]:
+def _term_variants(
+    text: str,
+    line_starts: Sequence[int] | None = None,
+) -> list[dict[str, object]]:
+    starts = line_starts if line_starts is not None else _line_starts(text)
     variants: dict[str, set[str]] = defaultdict(set)
     locations: dict[str, list[dict[str, int]]] = defaultdict(list)
     for match in ASCII_TERM_PATTERN.finditer(text):
@@ -154,7 +184,7 @@ def _term_variants(text: str) -> list[dict[str, object]]:
         key = value.lower()
         variants[key].add(value)
         if len(locations[key]) < 10:
-            line, column = _line_column(text, match.start())
+            line, column = _indexed_line_column(starts, match.start())
             locations[key].append({"line": line, "column": column})
     return [
         {"key": key, "variants": sorted(values), "locations": locations[key]}
@@ -163,7 +193,11 @@ def _term_variants(text: str) -> list[dict[str, object]]:
     ]
 
 
-def _duplicate_paragraphs(text: str) -> list[dict[str, object]]:
+def _duplicate_paragraphs(
+    text: str,
+    line_starts: Sequence[int] | None = None,
+) -> list[dict[str, object]]:
+    starts = line_starts if line_starts is not None else _line_starts(text)
     groups: dict[str, list[tuple[int, str]]] = defaultdict(list)
     cursor = 0
     for paragraph in re.split(r"\n\s*\n", text):
@@ -175,7 +209,7 @@ def _duplicate_paragraphs(text: str) -> list[dict[str, object]]:
         if len(normalized) < 40:
             continue
         digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-        line = text.count("\n", 0, position) + 1
+        line = _indexed_line_column(starts, position)[0]
         groups[digest].append((line, normalized[:120]))
     return [
         {"occurrences": occurrences}
@@ -193,26 +227,40 @@ def review_document(
     ignored_rules: Iterable[str] = (),
 ) -> dict[str, object]:
     chunks = split_chunks(text, max_chars=max_chars, overlap=overlap)
+    line_starts = _line_starts(text)
     findings: list[dict[str, object]] = []
     for chunk in chunks:
         chunk_text = text[chunk.context_start : chunk.context_end]
         findings.extend(
-            _global_findings(text, chunk, chunk_text, profiles, ignored_rules)
+            _global_findings(
+                text, chunk, chunk_text, profiles, ignored_rules, line_starts
+            )
         )
     deduped: dict[tuple[object, object, object], dict[str, object]] = {}
     for finding in findings:
         key = (finding["rule_id"], finding["line"], finding["column"])
         deduped[key] = finding
-    findings = sorted(
+    all_findings = sorted(
         deduped.values(),
         key=lambda item: (int(item["line"]), int(item["column"]), str(item["rule_id"])),
     )
-    headings = [
-        {"title": match.group(1).strip(), "line": _line_column(text, match.start())[0]}
+    all_headings = [
+        {
+            "title": match.group(1).strip(),
+            "line": _indexed_line_column(line_starts, match.start())[0],
+        }
         for match in HEADING_PATTERN.finditer(text)
     ]
-    fail_count = sum(item["severity"] == "fail" for item in findings)
-    warn_count = sum(item["severity"] == "warn" for item in findings)
+    all_numbers = _number_index(text, line_starts)
+    all_term_variants = _term_variants(text, line_starts)
+    all_duplicates = _duplicate_paragraphs(text, line_starts)
+    fail_count = sum(item["severity"] == "fail" for item in all_findings)
+    warn_count = sum(item["severity"] == "warn" for item in all_findings)
+    findings = all_findings[:MAX_OUTPUT_FINDINGS]
+    headings = all_headings[:MAX_OUTPUT_HEADINGS]
+    numbers = all_numbers[:MAX_OUTPUT_INDEX_ENTRIES]
+    term_variants = all_term_variants[:MAX_OUTPUT_INDEX_ENTRIES]
+    duplicates = all_duplicates[:MAX_OUTPUT_DUPLICATE_GROUPS]
     return {
         "summary": {
             "characters": len(text),
@@ -224,10 +272,23 @@ def review_document(
             "warn": warn_count,
         },
         "headings": headings,
-        "number_index": _number_index(text),
-        "term_variants": _term_variants(text),
-        "duplicate_paragraphs": _duplicate_paragraphs(text),
+        "number_index": numbers,
+        "term_variants": term_variants,
+        "duplicate_paragraphs": duplicates,
         "findings": findings,
+        "output_limits": {
+            "findings": MAX_OUTPUT_FINDINGS,
+            "headings": MAX_OUTPUT_HEADINGS,
+            "index_entries": MAX_OUTPUT_INDEX_ENTRIES,
+            "duplicate_groups": MAX_OUTPUT_DUPLICATE_GROUPS,
+        },
+        "omitted": {
+            "findings": max(0, len(all_findings) - len(findings)),
+            "headings": max(0, len(all_headings) - len(headings)),
+            "number_index": max(0, len(all_numbers) - len(numbers)),
+            "term_variants": max(0, len(all_term_variants) - len(term_variants)),
+            "duplicate_paragraphs": max(0, len(all_duplicates) - len(duplicates)),
+        },
         "limitations": [
             "分块预检不能替代主张—证据、引用、法律和学术专业复核。",
             "块之间使用有限上下文重叠；跨段语义关系仍需模型或人工全局复核。",
@@ -247,6 +308,7 @@ def _read(path_value: str) -> tuple[str, str]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(
         description="对超长 ReviewWrite 文档进行分块预检和全局一致性索引。"
     )

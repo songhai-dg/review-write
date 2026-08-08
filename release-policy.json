@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "repository": "songhai-dg/review-write",
-  "current_version": "0.8.2",
+  "current_version": "0.8.3",
   "channels": {
     "stable": {
       "schedule": "weekly-if-qualified",
@@ -32,6 +32,8 @@
   "release_gates": [
     "structure-validation",
     "unit-tests",
+    "delivery-gate-regression",
+    "cross-platform-ci",
     "leakage-regression",
     "fewshot-provenance",
     "protected-fact-regression",

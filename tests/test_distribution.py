@@ -15,7 +15,9 @@ class DistributionKitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp) / "kit"
             build_distribution_kit.files("0.5.2", output)
-            manifest = json.loads((output / "distribution-manifest.json").read_text())
+            manifest = json.loads(
+                (output / "distribution-manifest.json").read_text(encoding="utf-8")
+            )
             self.assertEqual(manifest["canonical_source"], "https://github.com/songhai-dg/review-write")
             self.assertEqual(manifest["mirror_source"], "https://gitee.com/cufe01/songhai-dg")
             for name in (
@@ -31,7 +33,7 @@ class DistributionKitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp) / "kit"
             build_distribution_kit.files("0.5.2", output)
-            prompt = (output / "install-prompt.txt").read_text()
+            prompt = (output / "install-prompt.txt").read_text(encoding="utf-8")
             self.assertIn("平台自己的 Skill 安装或导入机制", prompt)
             self.assertNotIn(".hermes", prompt)
             self.assertNotIn("Path.home", prompt)

@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 from xml.etree import ElementTree as ET
 
+from runtime_io import configure_utf8_stdio
+
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
@@ -324,7 +326,14 @@ def render_gate(path: Path, mode: str, output_dir: Path | None) -> dict[str, Any
     destination = output_dir or Path(tempfile.mkdtemp(prefix="reviewwrite-office-qa-"))
     destination.mkdir(parents=True, exist_ok=True)
     command = [soffice, "--headless", "--convert-to", "pdf", "--outdir", str(destination), str(path)]
-    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    completed = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
     pdf_path = destination / f"{path.stem}.pdf"
     if completed.returncode != 0 or not pdf_path.is_file():
         return {
@@ -340,6 +349,8 @@ def render_gate(path: Path, mode: str, output_dir: Path | None) -> dict[str, Any
             [pdftoppm, "-png", "-r", "144", str(pdf_path), str(prefix)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
         )
         if raster.returncode == 0:
@@ -401,6 +412,7 @@ def audit(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="ReviewWrite DOCX/PPTX 字体与渲染审计（只读）")
     parser.add_argument("input", type=Path, help="待审计的 .docx 或 .pptx")
     parser.add_argument("--font-profile", type=Path, help="经确认的字体 profile JSON")

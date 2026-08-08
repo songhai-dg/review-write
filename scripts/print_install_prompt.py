@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 from typing import Sequence
 
+from runtime_io import configure_utf8_stdio
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -41,6 +43,7 @@ def render(repo: str) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="生成 ReviewWrite 一句话安装指令")
     parser.add_argument("--repo", help="官方 GitHub 仓库，格式 owner/repo")
     args = parser.parse_args(argv)

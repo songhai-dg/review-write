@@ -2,6 +2,8 @@
 
 **把不该交付的 AI 过程残留，变成可核验的专业正文。**
 
+**不拿幻觉换“人味”：不编造经历、数据、来源、案例或细节。**
+
 *Review before rewrite. Keep the facts. Lose the slop.*
 
 不是 AI 检测规避器；是专业写作的交付质量控制。
@@ -16,7 +18,7 @@
 
 ## 中文
 
-ReviewWrite 0.8.1 增加风险自适应宿主接入：高风险正式写作和超长文档强制进入先审后写与最终门禁，中风险正文任务建议接入，普通问答不拦截。它不会为了“具有人味”编造经历、数据、来源或细节。
+ReviewWrite 0.8.3 增加可执行交付门禁：高风险正式写作、双语专业文本和超长文档进入先审后写闭环；结构化响应必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文。它不会为了“具有人味”编造经历、数据、来源或细节。
 
 ### 先审后写，保护事实，交付正文
 
@@ -81,17 +83,23 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 
 - 适配论文、基金、政策、报告、公文、备忘录、营销和双语写作；
 - 0.6.0 增加跨语言专业审写：中英互译时保护数字、引用、术语、主张、限定条件和责任边界，并按目标地区、体裁和话语共同体独立审校；
-- 支持超长文档审写：对十万字及更长文本进行分块预检、全文行号定位、数字/标题索引、术语变体和重复段落检查，避免把片段检查误报成全文完成；
+- 支持超长文档审写：对十万字及更长文本进行章节优先分块，使用一次性全文行索引定位发现项、中文数字和标题，并限制结果体积，避免重复扫描和把片段检查误报成全文完成；
 - 根据语言、读者和真实体裁选择表达，不强套模板；
-- 可作为宿主智能体的写作质量控制层：写前传递文档契约，写后抽取正式正文并严格终检，问题最多回改两轮后再交付；
+- 可作为宿主智能体的写作质量控制层：风险路由负责决定是否接入，可执行门禁负责抽取、严格终检和“失败时不输出正文”，问题最多回改两轮后再交付；
 - 增加技术解读/产业评论路由：检查模型、推理、设备、内存和性能主张中的叠加式模板信号与技术口径；
 - 默认保护数字、引用、专名、义务和限定条件；
 - 将评审、修改稿和复核分开，并对正式正文做泄漏预检；
 - 泄漏预检支持体裁与语境感知：AI 安全论文讨论 `system prompt`、公文使用结构化条目等被授权情形，用 `--context`/`--genre` 声明后降级或放宽，避免正当写作被误判；
 - 识别空泛强化和公式化转折，但必须按体裁、上下文与证据判断，不使用生硬禁词表；
-- 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举。
-- 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件。
+- 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举；
+- 识别“值得注意的是”“总的来说”、无来源“研究表明”、连续“我们可以看到……这说明……”、翻译腔和对称句式堆叠；
+- 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件；
 - 对超长 UTF-8 文本提供分块预检和全局一致性索引；明确报告覆盖范围，不把部分审核声称为全文完成。
+
+```bash
+# 结构化响应通过后，只输出不带标签的正文；失败时不输出正文
+python3 scripts/reviewwrite_gate.py path/to/response.txt
+```
 
 ### AI 风格与过程残留审查清单
 
@@ -110,6 +118,9 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 | 公式化转折与悬念 `RW-W-203/RW-W-208` | 二元反转、悬念桥接和重复总结 | “不是……而是……”“换句话说”“最危险的地方” | 单次有逻辑可保留；连续堆叠或不增加信息时 `warn` |
 | 极端重要性标签 `RW-W-214` | “最硬、最关键、绝对不能”等简短排序宣告 | “最硬的一点是效率” | 要求比较范围、判断标准、对象和依据；不能证明排序时改成具体约束 |
 | 元叙事包装 `RW-W-215` | “叙事、故事、底层逻辑”替代事实链或机制 | “这背后是一套新的叙事” | 展开主体、行动、对象、过程和结果；确实讨论传播框架时保留并补定义 |
+| 话语填充与重复总结 `RW-W-216/RW-W-217` | 提醒读者注意或重复收束，却没有新增信息 | “值得注意的是”“总的来说” | 直接写新增事实、判断、适用范围或行动；单纯重复时删除 |
+| 模糊权威与推论旁白 `RW-W-218/RW-W-220` | 无可定位来源的背书，或连续用观察话术推进结论 | “研究表明”“我们可以看到……这说明……” | 补真实来源和推论条件；无法核验时改为有限判断 |
+| 翻译腔与对称句式堆叠 `RW-W-219/RW-W-221` | 直译句法或多组平衡结构替代信息取舍 | “对于企业而言，进行一个……”“既要……也要……”连续出现 | 按目标语言重组主谓宾；按事实、判断和行动重排，单个功能性句式可保留 |
 | 宣传腔与格式模板 `RW-W-204/RW-W-205` | 空泛赋能、固定卖点、标签式列表 | “全面赋能”“打造新生态” | 结合政策、营销和公文体裁判断，不使用跨体裁禁词 |
 | 技术评论叠加信号 `RW-W-209—RW-W-212` | 模型/推理/设备文本中的反转、重要性、用户泛化、预测和数字 | “这个细节很关键”+“大多数用户”+“更可能” | 只在 `public-article`/`technical-commentary` 语境告警；要求补机制、指标、来源和条件 |
 | 机械枚举 `RW-W-213` | 三个以上句首“第一、第二、第三/首先、其次、最后” | 全文每段都用同一排序节奏 | `warn`；先区分事实、证据、判断、行动；政策条文、方法步骤和正式清单可保留 |
@@ -175,6 +186,7 @@ few-shot 不是越大越好的模板库。每次最多选择三个：一个修�
 ```bash
 python3 scripts/reviewwrite_lint.py path/to/draft.md
 python3 scripts/reviewwrite_lint.py path/to/draft.md --strict
+python3 scripts/reviewwrite_gate.py path/to/structured-response.txt
 python3 scripts/validate_skill.py
 python3 -m unittest discover -s tests -v
 python3 scripts/package_skill.py
@@ -225,6 +237,8 @@ Install ReviewWrite from the canonical repository https://github.com/songhai-dg/
 
 It is not an AI-detector bypass tool; it is delivery-quality control for professional writing.
 
+It never trades hallucinations for a more “human” tone: no invented experience, data, sources, cases, or details.
+
 It addresses four recurring failures:
 
 - prompts, reasoning, tool calls, or editorial instructions leaking into the deliverable;
@@ -244,15 +258,20 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 
 - genre-aware Chinese and English writing support;
 - cross-language professional review between Chinese and English, preserving terminology, claims, qualifications, and responsibility boundaries across translation;
-- long-document review for 100k+ characters: chunked preflight, global locations, heading/number indexes, term-variant and duplicate-paragraph signals, with explicit coverage and limitation reporting;
+- long-document review for 100k+ characters: heading-aware chunking, one reusable line-offset index, bounded output, global locations, Chinese-context number/heading indexes, term variants, and duplicate-paragraph signals;
 - technical commentary review for model, inference, device, memory, and performance claims, including composite template signals and scope checks;
 - context-sensitive routing by language, audience, locale, and discourse community;
+- an executable delivery gate that extracts the unique body, runs strict checks, emits body-only output on success, and emits no body on failure;
 - protection for facts, numbers, citations, names, obligations, and qualifications;
 - separated review, revision, deliverable, and verification surfaces with leakage checks;
 - genre- and context-aware preflight: authorized cases such as an AI-safety paper discussing `system prompt`, or an official document using structured items, are declared with `--context`/`--genre` and downgraded or relaxed instead of hard-failing legitimate writing;
 - contextual checks for empty intensifiers and formulaic pivots, rather than a rigid blacklist of “AI words”;
-- composite checks for stacked technical-commentary signals and repetitive sentence-initial enumeration, with genre-aware exemptions.
+- composite checks for stacked technical-commentary signals, vague authority, inference narration, translationese, symmetric structures, and repetitive sentence-initial enumeration, with genre-aware exemptions;
 - optional audit-only DOCX/PPTX delivery QA for Chinese/Latin font declarations, theme/inheritance uncertainty, confirmed-profile mismatches, target font inventories, and a render gate; it never silently rewrites a source Office file.
+
+```bash
+python3 scripts/reviewwrite_gate.py path/to/response.txt
+```
 
 ### AI-style and process-residue coverage
 
@@ -274,6 +293,9 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Mechanical enumeration `RW-W-213` | Three or more sentence-initial ordinal markers | Every paragraph starts “First, Second, Third” | `warn`; distinguish facts, evidence, judgment, and action; retain policy clauses and method steps |
 | Extreme-importance labels `RW-W-214` | Short ranking claims such as “the hardest point” or “absolutely cannot” | “The hardest point is efficiency” | Add comparison scope, standard, object, and evidence; replace unsupported ranking with a concrete constraint |
 | Meta-narrative packaging `RW-W-215` | “Narrative”, “story”, or “underlying logic” replacing a fact chain or mechanism | “Behind this is a new narrative” | Expand actor, action, object, process, and result; define the term when discussing a genuine communication framework |
+| Discourse filler/redundant summary `RW-W-216/RW-W-217` | Attention markers or closure without new information | “It is worth noting”, “Overall” | State the new fact, judgment, scope, or action directly |
+| Vague authority/inference narration `RW-W-218/RW-W-220` | Unlocatable attribution or stacked “we can see/this shows” narration | “Research shows”, “We can see…this shows…” | Add a real source and inference conditions, or narrow the claim |
+| Translationese/symmetric stacking `RW-W-219/RW-W-221` | Source-language syntax or repeated balanced clauses replacing information choices | literal “conduct an analysis” structures; repeated “both…and…” | Rebuild target-language syntax and organize by fact, judgment, and action |
 
 Coverage includes `zh-CN` and general professional English across papers, grants, public articles, technical commentary, policy, official documents, reports, memos, marketing, and bilingual writing. Findings are review signals, not a “human score” or detector-evasion promise.
 
@@ -291,7 +313,7 @@ Four synthetic cases show the draft, revision, and verification result. Strict p
 
 ### Security and provenance
 
-The release bundle contains only the Skill, references, one configuration-structure example, and local text/Office QA scripts. They do not make network requests, read credentials, modify or upload input prose or source Office files. Only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [SECURITY.md](SECURITY.md) for the full boundary.
+The release bundle contains the Skill, references, one configuration-structure example, local text/Office QA scripts, and an optional updater. The default writing path stays local: it does not read credentials, modify or upload input prose or source Office files. Only an explicitly enabled update check contacts a Release source; only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [SECURITY.md](SECURITY.md) for the full boundary.
 
 ### Office delivery QA: audit before any repair
 
@@ -336,6 +358,7 @@ Few-shots are not a growing template dump. A task may select up to three example
 ```bash
 python3 scripts/reviewwrite_lint.py path/to/draft.md
 python3 scripts/reviewwrite_lint.py path/to/draft.md --strict
+python3 scripts/reviewwrite_gate.py path/to/structured-response.txt
 python3 scripts/validate_skill.py
 python3 -m unittest discover -s tests -v
 python3 scripts/package_skill.py

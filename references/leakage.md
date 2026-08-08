@@ -69,7 +69,8 @@
 - AI 安全、提示注入或模型透明度研究论文；
 - 对话记录、提示模板或软件文档；
 - 明确要求披露 AI 辅助方法的致谢或方法声明；
-- 编辑审计报告。
+- 编辑审计报告；
+- 确实讨论证据范围或验收标准的法律分析、研究方法文本。
 
 即使允许，也要确认术语是在讨论对象中出现，而不是模型无意泄漏自己的运行过程。
 
@@ -79,7 +80,7 @@
 python3 scripts/reviewwrite_lint.py <body-path> --surface deliverable_body --context ai-safety
 ```
 
-可用语境：`ai-safety`（AI 安全、提示注入、模型透明度研究）、`prompt-engineering`（提示模板）、`software-docs`（软件文档中的模块与工具名）、`ai-disclosure`（AI 辅助披露声明）、`dialogue-transcript`（对话转写）、`editorial-audit`（编辑审计报告）。降级只保留人工确认信号，不代表放行；仍需逐条确认术语确属讨论对象。运行 `--list-profiles` 查看每个语境放宽的具体规则。
+可用语境：`ai-safety`（AI 安全、提示注入、模型透明度研究）、`prompt-engineering`（提示模板）、`software-docs`（软件文档中的模块与工具名）、`ai-disclosure`（AI 辅助披露声明）、`dialogue-transcript`（对话转写）、`editorial-audit`（编辑审计报告）、`legal-analysis`（法律证据范围）、`research-methods`（研究方法中的证据范围）。法律与研究语境只对“证据边界/验收标准”本身做短语级放宽，不能让“本报告已经通过最终门禁”之类无关过程残留绕过检查。其他降级只保留人工确认信号，不代表严格门禁放行；逐条确认后才可在交付门禁中添加 `--confirm-context-warnings`。该开关不接受普通风格警告或硬失败。运行 `--list-profiles` 查看每个语境放宽的具体规则。
 
 ## 安全替换示例
 

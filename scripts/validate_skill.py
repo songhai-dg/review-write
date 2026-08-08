@@ -9,6 +9,8 @@ import re
 import sys
 from pathlib import Path
 
+from runtime_io import configure_utf8_stdio
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
@@ -47,6 +49,8 @@ REQUIRED_FILES = (
     "examples/simulation/manifest.json",
     "examples/simulation/RUN_REPORT.md",
     "scripts/reviewwrite_lint.py",
+    "scripts/reviewwrite_gate.py",
+    "scripts/runtime_io.py",
     "scripts/reviewwrite_update.py",
     "scripts/print_install_prompt.py",
     "scripts/render_release_notes.py",
@@ -117,6 +121,15 @@ def validate() -> list[str]:
 
     if skill_path.is_file() and "natural_language_aliases: [\"审写\", \"ReviewWrite\"]" not in skill_text:
         errors.append("SKILL.md 缺少审写与 ReviewWrite 的自然语言简称声明")
+
+    agent_config = ROOT / "agents" / "openai.yaml"
+    if agent_config.is_file():
+        agent_text = agent_config.read_text(encoding="utf-8")
+        for field in ("display_name", "short_description", "default_prompt"):
+            if not re.search(rf"(?m)^  {field}:\s+\S", agent_text):
+                errors.append(f"agents/openai.yaml 的 {field} 缺失或缩进错误")
+        if "reviewwrite_gate.py" not in agent_text:
+            errors.append("agents/openai.yaml 未要求执行交付门禁")
 
 
     genre_dir = ROOT / "references" / "genre-packs"
@@ -236,6 +249,8 @@ def validate() -> list[str]:
 
     for script_name in (
         "scripts/reviewwrite_lint.py",
+        "scripts/reviewwrite_gate.py",
+        "scripts/runtime_io.py",
         "scripts/validate_skill.py",
         "scripts/package_skill.py",
         "scripts/install_skill.py",
@@ -244,6 +259,9 @@ def validate() -> list[str]:
         "scripts/print_install_prompt.py",
         "scripts/render_release_notes.py",
         "scripts/office_qa.py",
+        "scripts/long_document_review.py",
+        "scripts/reviewwrite_route.py",
+        "scripts/build_distribution_kit.py",
     ):
         script_path = ROOT / script_name
         if script_path.is_file():
@@ -256,6 +274,7 @@ def validate() -> list[str]:
 
 
 def main() -> int:
+    configure_utf8_stdio()
     errors = validate()
     if errors:
         for error in errors:

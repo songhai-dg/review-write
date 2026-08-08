@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.8.2
+version: 0.8.3
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -40,7 +40,7 @@ platforms: [linux, macos, windows]
 
 宿主智能体先运行风险路由，再决定是否接入 ReviewWrite：正式论文、报告、公文、政策、营销和超长文档为高风险，必须接入；普通正文任务为中风险，建议接入；事实问答、命令和格式操作不必接入。被接入后，最终门禁必须执行。可执行路由、交接字段、状态和有限回改协议见 [references/agent-handoff.md](references/agent-handoff.md)。
 
-最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Final gate → Repair（最多两轮）→ Deliver`。用户只要正文时，交接信息和评审过程保持内部可用，不混入正文；用户要求评审时，再按四个 surface 输出。
+最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Final gate → Repair（最多两轮）→ Deliver`。路由只决定是否接入，不代表已经执行终检；交付前必须运行 `scripts/reviewwrite_gate.py`。用户只要正文时，门禁通过后向用户返回不带标签的正文；交接信息、标签和评审过程保持内部可用。用户要求评审时，再按四个 surface 输出。
 
 ## 设计原则：固定边界，动态判断
 
@@ -173,10 +173,10 @@ platforms: [linux, macos, windows]
 详细模式见 [references/leakage.md](references/leakage.md)。可运行：
 
 ```bash
-python3 scripts/reviewwrite_lint.py <response-path> --surface deliverable_body
+python3 scripts/reviewwrite_gate.py <response-path>
 ```
 
-只对抽取后的 `deliverable_body` 运行正文 linter。评审报告可以引用原文中的问题句，不能因为评审证据触发正文泄漏失败；但这不豁免正文自身的泄漏。
+该命令严格解析唯一的 `deliverable_body`，只对抽取后的正文运行严格 linter；通过时只向标准输出写入不带标签的正文，失败时不输出正文。评审报告可以引用原文中的问题句，不能因为评审证据触发正文泄漏失败；但这不豁免正文自身的泄漏。若输入本来就是纯正文，必须显式使用 `--input-mode raw`，避免把混合响应误当成正文。
 
 当正文本身以某种被授权的语境为讨论对象时（AI 安全与提示注入研究、提示模板与软件文档、AI 辅助披露声明、对话转写、编辑审计报告），相关术语可能是主题而非泄漏。此时用 `--context` 声明语境，linter 会把对应硬失败降级为警告，保留人工确认信号而不是无差别拦截；用 `--genre` 声明体裁时，会放宽该体裁中功能性的格式警告（如公文、政策条文的结构化条目）。
 
@@ -186,7 +186,7 @@ python3 scripts/reviewwrite_lint.py <response-path> --genre official-document
 python3 scripts/reviewwrite_lint.py --list-profiles
 ```
 
-声明语境不等于放行：降级后的警告仍要求确认术语确实是在讨论对象中出现，而不是模型无意暴露自身运行过程。语境和体裁只放宽表达层面的信号，绝不放宽事实、数字、引用和限定条件的保护——那属于语义复核，不属于本预检。
+声明语境不等于放行：降级后的警告仍要求确认术语确实是在讨论对象中出现，而不是模型无意暴露自身运行过程。最终门禁默认继续阻断这些警告；逐条确认后才可同时使用 `--context <name> --confirm-context-warnings`。该开关只接受带 `applied_profile` 的语境降级项，不接受普通风格警告或硬失败。语境和体裁绝不放宽事实、数字、引用和限定条件的保护——那属于语义复核，不属于本预检。
 
 ### 4. 独立评审
 
@@ -249,7 +249,7 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 1. 语义复核：逐项检查事实、数字、引用、专名、限定条件、义务和不确定性；
 2. 交付复核：运行泄漏预检，检查体裁、正文边界、机械表达和聊天式结尾；若此次包含 DOCX/PPTX 交付，再完成相应 Office QA 的结构审计和渲染门禁。
 
-最终输出前必须把 `deliverable_body` 单独送入严格预检：正文文件运行 `python3 scripts/reviewwrite_lint.py <path> --strict`；带四个 surface 标签的响应先解析标签，再只检查其中的 `deliverable_body`。除了提示、推理和工具泄漏，还要检查“证据边界、保留约束、验收标准、交付正文、最终门禁、回改轮次”等只供内部使用的契约术语，尤其检查标题、段首和结论位置。一般任务中这些词一旦进入正文就是阻断项；只有法律分析、研究方法、软件文档、AI 安全或编辑审计确实以该术语为讨论对象时，才显式声明授权语境。任何 `fail` 或严格模式下的 `warn` 都必须回到修改阶段；不能只凭模型自评“已经自然”，也不能只审评审报告而跳过正式正文。
+最终输出前必须执行 `python3 scripts/reviewwrite_gate.py <response-path>`。门禁负责结构化抽取、正文严格预检和“失败时不输出正文”；纯正文文件才使用 `--input-mode raw`。除了提示、推理和工具泄漏，还要检查“证据边界、保留约束、验收标准、交付正文、最终门禁、回改轮次”等只供内部使用的契约术语，以及“值得注意的是、总的来说、研究表明、我们可以看到……这说明……”等容易用组织话术代替信息或来源的组合信号。一般任务中内部契约术语一旦进入正文就是阻断项；只有法律分析、研究方法、软件文档、AI 安全或编辑审计确实以该术语为讨论对象时，才显式声明授权语境。任何 `fail` 或严格模式下的 `warn` 都必须回到修改阶段；不能只凭模型自评“已经自然”，也不能只审评审报告而跳过正式正文。
 
 发现漂移时恢复原文或降低修改幅度。存在 blocker 时不得声称完成。
 
@@ -280,9 +280,9 @@ preserve、repair、optional 和 acceptance。
 
 `deliverable_body` 的末尾禁止“如果你需要”“我也可以继续”“希望这有帮助”等交接语。任何后续帮助只能由技能外层对话单独发送，不能进入结构化响应。
 
-如果本地可执行 Python：先按标签抽取，再只对 `deliverable_body` 执行 linter；出现 `fail` 时回到改写步骤修复并重新验证。修复回路应有限，仍失败就报告触发句和失败状态，不得声称通过。警告是模型判断的线索，不是跨体裁的自动删改指令。
+如果本地可执行 Python：运行 `reviewwrite_gate.py`；未通过时根据诊断回到改写步骤并重新验证。修复回路应有限，仍失败就报告触发句和失败状态，不得输出未通过正文或声称通过。警告是模型判断的线索，不是跨体裁的自动删改指令。
 
-用户只要求正文时，可以只输出 `<deliverable_body>`；仍须在内部完成评审和验证。不得输出隐藏推理，只提供简洁、可核验的修改依据。
+用户只要求正文时，结构化标签仅用于内部抽取；门禁通过后只向用户输出标签内的正文，不显示 `<deliverable_body>` 标签。仍须在内部完成评审和验证。不得输出隐藏推理，只提供简洁、可核验的修改依据。
 
 ## 成功标准
 

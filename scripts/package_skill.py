@@ -8,9 +8,11 @@ import zipfile
 from pathlib import Path
 from typing import Sequence
 
+from runtime_io import configure_utf8_stdio
+
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.8.2"
+VERSION = "0.8.3"
 SKILL_ID = "reviewwrite"
 
 
@@ -19,6 +21,8 @@ def bundle_files() -> list[Path]:
         ROOT / "SKILL.md",
         ROOT / "agents" / "openai.yaml",
         ROOT / "scripts" / "reviewwrite_lint.py",
+        ROOT / "scripts" / "reviewwrite_gate.py",
+        ROOT / "scripts" / "runtime_io.py",
         ROOT / "scripts" / "office_qa.py",
         ROOT / "scripts" / "reviewwrite_update.py",
         ROOT / "scripts" / "long_document_review.py",
@@ -43,6 +47,7 @@ def build(output: Path) -> Path:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="构建 ReviewWrite .skill 文件")
     parser.add_argument(
         "--output",

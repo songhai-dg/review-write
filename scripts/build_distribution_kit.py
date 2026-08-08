@@ -10,6 +10,8 @@ import zipfile
 from pathlib import Path
 from typing import Sequence
 
+from runtime_io import configure_utf8_stdio
+
 ROOT = Path(__file__).resolve().parents[1]
 REPO = "songhai-dg/review-write"
 MIRROR = "https://gitee.com/cufe01/songhai-dg"
@@ -79,16 +81,20 @@ def files(version: str, output: Path) -> list[Path]:
     output.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     manifest_path = output / "distribution-manifest.json"
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     paths.append(manifest_path)
     for name, content in posts.items():
         path = output / name
-        path.write_text(content)
+        path.write_text(content, encoding="utf-8")
         paths.append(path)
     return paths
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="生成 ReviewWrite 对外分发素材包")
     parser.add_argument("--version", default=current_version())
     parser.add_argument("--output", type=Path, default=ROOT / "dist" / "distribution-kit")

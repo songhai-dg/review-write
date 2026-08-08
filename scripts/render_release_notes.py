@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Sequence
 
+from runtime_io import configure_utf8_stdio
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,6 +65,7 @@ def render(version: str | None = None) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="生成 ReviewWrite GitHub Release 说明")
     parser.add_argument("--version", help="目标版本；默认读取 SKILL.md")
     args = parser.parse_args(argv)

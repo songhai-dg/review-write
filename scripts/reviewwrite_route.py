@@ -7,16 +7,19 @@ import argparse
 import json
 from typing import Any
 
+from runtime_io import configure_utf8_stdio
+
 HIGH_RISK_GENRES = frozenset({
     "academic-paper", "grant-proposal", "policy-brief", "policy-document",
     "official-document", "research-report", "executive-memo", "public-article",
-    "technical-commentary", "marketing-copy",
+    "technical-commentary", "marketing-copy", "bilingual",
 })
 FORMAL_TASKS = frozenset({"write", "rewrite", "translate", "summarize", "long_document"})
-LOW_TASKS = frozenset({"chat", "fact", "concept", "command", "format-only", "office-audit"})
+LOW_TASKS = frozenset({"chat", "fact", "concept", "command", "format-only"})
 
 
 def route(*, task_type: str, genre: str | None = None, characters: int = 0,
+          language: str | None = None,
           formal: bool = False, has_preserve_constraints: bool = False,
           has_evidence_boundary: bool = False, explicit_skip: bool = False) -> dict[str, Any]:
     """Return a deterministic, local-only routing decision."""
@@ -26,9 +29,17 @@ def route(*, task_type: str, genre: str | None = None, characters: int = 0,
         return {"policy_version": 1, "tier": "skipped", "invoke": "skipped_by_user",
                 "final_gate": "not_run", "repair_max_attempts": 0,
                 "reason": "用户明确要求跳过审写", "warning": "不得声称正文已经过 ReviewWrite 审核"}
-    high = (formal or genre in HIGH_RISK_GENRES or characters >= 100_000
+    if task_type in {"office-audit", "office_audit"}:
+        return {"policy_version": 1, "tier": "high", "invoke": "required",
+                "final_gate": "office-qa-required", "repair_max_attempts": 0,
+                "review_stage": "office-audit",
+                "reason": "用户明确要求 Office QA，必须执行只读字体与渲染风险审计"}
+    high = (formal or genre in HIGH_RISK_GENRES or language == "bilingual" or characters >= 100_000
             or has_preserve_constraints or has_evidence_boundary)
-    if high and (task_type in FORMAL_TASKS or formal or genre or characters >= 100_000):
+    if high and (
+        task_type in FORMAL_TASKS or formal or genre or language == "bilingual"
+        or characters >= 100_000
+    ):
         return {"policy_version": 1, "tier": "high", "invoke": "required",
                 "final_gate": "required", "repair_max_attempts": 2,
                 "review_stage": "preflight-and-final-gate",
@@ -44,9 +55,11 @@ def route(*, task_type: str, genre: str | None = None, characters: int = 0,
 
 
 def main() -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description="ReviewWrite 宿主智能体风险自适应路由")
     parser.add_argument("--task-type", required=True)
     parser.add_argument("--genre")
+    parser.add_argument("--language", choices=("zh-CN", "en", "bilingual"))
     parser.add_argument("--characters", type=int, default=0)
     parser.add_argument("--formal", action="store_true")
     parser.add_argument("--preserve-constraints", action="store_true")
@@ -55,7 +68,8 @@ def main() -> int:
     parser.add_argument("--format", choices=("json", "text"), default="json")
     args = parser.parse_args()
     try:
-        decision = route(task_type=args.task_type, genre=args.genre, characters=args.characters,
+        decision = route(task_type=args.task_type, genre=args.genre, language=args.language,
+                         characters=args.characters,
                          formal=args.formal, has_preserve_constraints=args.preserve_constraints,
                          has_evidence_boundary=args.evidence_boundary, explicit_skip=args.skip_review)
     except ValueError as exc:

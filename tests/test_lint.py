@@ -68,6 +68,23 @@ class ReviewWriteLintTests(unittest.TestCase):
         bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
         self.assertIn("scripts/long_document_review.py", bundle_paths)
 
+    def test_long_document_indexes_common_chinese_numbers(self) -> None:
+        text = "2025年增长4.8%，覆盖12个地区，样本为186家企业，金额1亿元。"
+        values = {item["value"] for item in long_document_review.review_document(text)["number_index"]}
+        self.assertTrue({"2025年", "4.8%", "12个", "186家", "1亿元"} <= values)
+
+    def test_long_document_prefers_heading_aligned_chunks(self) -> None:
+        section = "正文内容。" * 260
+        text = f"# 第一章\n{section}\n\n# 第二章\n{section}\n"
+        chunks = long_document_review.split_chunks(text, max_chars=1400, overlap=64)
+        second_heading = text.index("# 第二章")
+        self.assertTrue(any(chunk.start == second_heading for chunk in chunks))
+
+    def test_long_document_declares_bounded_output(self) -> None:
+        result = long_document_review.review_document("# 标题\n正文。")
+        self.assertEqual(result["output_limits"]["findings"], 5000)
+        self.assertEqual(result["omitted"]["findings"], 0)
+
     def test_update_cache_root_uses_native_platform_defaults(self) -> None:
         home = Path("/home/reviewwrite")
         self.assertEqual(
@@ -159,6 +176,77 @@ class ReviewWriteLintTests(unittest.TestCase):
     def test_internal_contract_terms_do_not_flag_ordinary_evidence_language(self) -> None:
         text = "现有材料支持该结论，但样本范围不足以推出全国性判断。"
         self.assertNotIn("RW-F-006", {item.rule_id for item in reviewwrite_lint.lint_text(text)})
+
+    def test_legal_context_does_not_bypass_unrelated_internal_process_terms(self) -> None:
+        text = "本报告已经通过最终门禁和两轮回改。"
+        findings = reviewwrite_lint.lint_text(text, profiles=["legal-analysis"])
+        self.assertIn("RW-F-006", {item.rule_id for item in findings})
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings, strict=True), 1)
+
+    def test_software_docs_downgrade_surface_names_but_strict_gate_still_stops(self) -> None:
+        text = "该接口返回 deliverable_body 字段。"
+        findings = reviewwrite_lint.lint_text(text, profiles=["software-docs"])
+        finding = next(item for item in findings if item.rule_id == "RW-F-006")
+        self.assertEqual(finding.severity, "warn")
+        self.assertEqual(finding.applied_profile, "software-docs")
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings, strict=True), 1)
+
+    def test_documented_discourse_and_summary_fillers_are_reviewed(self) -> None:
+        findings = reviewwrite_lint.lint_text(
+            "值得注意的是，样本仍然有限。总的来说，这项工作十分重要。"
+        )
+        self.assertTrue({"RW-W-216", "RW-W-217"} <= {item.rule_id for item in findings})
+
+    def test_stacked_inference_narration_is_reviewed(self) -> None:
+        findings = reviewwrite_lint.lint_text(
+            "我们可以看到，数据出现变化。这说明政策已经见效。"
+        )
+        self.assertIn("RW-W-220", {item.rule_id for item in findings})
+
+    def test_vague_authority_requires_a_locatable_source(self) -> None:
+        unsupported = reviewwrite_lint.lint_text("研究表明，该方法可以提升效率。")
+        cited = reviewwrite_lint.lint_text("张三（2024）研究表明，该方法可以提升效率。")
+        self.assertIn("RW-W-218", {item.rule_id for item in unsupported})
+        self.assertNotIn("RW-W-218", {item.rule_id for item in cited})
+
+    def test_translationese_and_stacked_symmetry_are_reviewed(self) -> None:
+        text = (
+            "对于企业而言，进行一个全面的评估是非常重要的。"
+            "治理既要提高效率，也要保障公平；执行既要明确主体，也要设定期限。"
+        )
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue({"RW-W-219", "RW-W-221"} <= rule_ids)
+
+    def test_single_functional_symmetric_sentence_is_not_blocked(self) -> None:
+        findings = reviewwrite_lint.lint_text("治理既要提高效率，也要保障公平。")
+        self.assertNotIn("RW-W-221", {item.rule_id for item in findings})
+
+    def test_ai_trace_regression_fixture_covers_documented_signals(self) -> None:
+        text = (ROOT / "tests/fixtures/ai_trace_stack.zh.md").read_text(encoding="utf-8")
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue(
+            {
+                "RW-W-214", "RW-W-215", "RW-W-216", "RW-W-217",
+                "RW-W-218", "RW-W-219", "RW-W-220", "RW-W-221",
+            }
+            <= rule_ids
+        )
+
+    def test_english_discourse_authority_and_inference_signals(self) -> None:
+        text = (
+            "It is worth noting that research shows the change is decisive. "
+            "We can see that adoption increased. This shows that the policy worked."
+        )
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue({"RW-W-216", "RW-W-218", "RW-W-220"} <= rule_ids)
+
+    def test_english_authority_uses_same_sentence_citation_only(self) -> None:
+        cited = reviewwrite_lint.lint_text("Smith (2024) reports that research shows a change.")
+        previous_sentence = reviewwrite_lint.lint_text(
+            "Smith (2024) reports an earlier result. Research shows a different change."
+        )
+        self.assertNotIn("RW-W-218", {item.rule_id for item in cited})
+        self.assertIn("RW-W-218", {item.rule_id for item in previous_sentence})
 
     def test_technical_commentary_detects_stacked_signals(self) -> None:
         draft = (
@@ -284,6 +372,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             input="本文分析 system prompt 注入的防御方法。\n",
         )
         self.assertEqual(result.returncode, 0)
@@ -306,6 +395,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             input="x\n",
         )
         self.assertEqual(result.returncode, 2)
@@ -320,6 +410,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("ai-safety", result.stdout)
@@ -334,6 +425,10 @@ class ReviewWriteLintTests(unittest.TestCase):
                 exemption.profile,
                 reviewwrite_lint.ALL_PROFILES,
             )
+        for exemption in reviewwrite_lint.MATCH_EXEMPTIONS:
+            self.assertIn(exemption.rule_id, rule_ids)
+            self.assertIn(exemption.action, {"ignore", "downgrade"})
+            self.assertIn(exemption.profile, reviewwrite_lint.ALL_PROFILES)
 
     def test_ignore_rule(self) -> None:
         findings = reviewwrite_lint.lint_text(
@@ -376,6 +471,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 1)
         payload = json.loads(result.stdout)
@@ -394,6 +490,8 @@ class ReviewWriteLintTests(unittest.TestCase):
             self.assertIn("SKILL.md", names)
             self.assertNotIn("skills/reviewwrite/SKILL.md", names)
             self.assertIn("scripts/reviewwrite_lint.py", names)
+            self.assertIn("scripts/reviewwrite_gate.py", names)
+            self.assertIn("scripts/runtime_io.py", names)
             self.assertIn("scripts/office_qa.py", names)
             self.assertIn("references/leakage.md", names)
             self.assertIn("references/office-qa.md", names)
@@ -540,11 +638,21 @@ class ReviewWriteLintTests(unittest.TestCase):
         openclaw = install_skill.plan_for("openclaw", "user", project_root)
         workbuddy = install_skill.plan_for("workbuddy", "user", project_root)
 
-        self.assertTrue(codex.destination.endswith(".agents/skills/reviewwrite"))
-        self.assertTrue(claude.destination.endswith(".claude/skills/reviewwrite"))
-        self.assertTrue(hermes.destination.endswith(".hermes/skills/productivity/reviewwrite"))
-        self.assertTrue(gemini.destination.endswith(".gemini/skills/reviewwrite"))
-        self.assertTrue(copilot.destination.endswith(".github/skills/reviewwrite"))
+        normalized = {
+            name: (plan.destination or "").replace("\\", "/")
+            for name, plan in (
+                ("codex", codex),
+                ("claude", claude),
+                ("hermes", hermes),
+                ("gemini", gemini),
+                ("copilot", copilot),
+            )
+        }
+        self.assertTrue(normalized["codex"].endswith(".agents/skills/reviewwrite"))
+        self.assertTrue(normalized["claude"].endswith(".claude/skills/reviewwrite"))
+        self.assertTrue(normalized["hermes"].endswith(".hermes/skills/productivity/reviewwrite"))
+        self.assertTrue(normalized["gemini"].endswith(".gemini/skills/reviewwrite"))
+        self.assertTrue(normalized["copilot"].endswith(".github/skills/reviewwrite"))
         self.assertIn("--global", openclaw.command or [])
         self.assertEqual(openclaw.completion, "installed-after-apply")
         self.assertEqual(workbuddy.action, "package-for-ui")
@@ -580,6 +688,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0)
         catalog = json.loads(result.stdout)

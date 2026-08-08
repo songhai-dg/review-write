@@ -12,6 +12,8 @@
 
 ## 宿主接入
 
-宿主智能体应把 ReviewWrite 当作写作质量控制层：写前传递任务、语言、地区、体裁、读者、目的、保护项和证据边界；写后抽取唯一 `deliverable_body`，运行严格终检；出现问题时最多回改两轮，仍未通过则阻断交付。不要把 `review_report`、`revision_plan`、工具过程或交接状态拼接进正式正文。完整协议见 [agent-handoff.md](agent-handoff.md)。
+宿主智能体应把 ReviewWrite 当作写作质量控制层：写前传递任务、语言、地区、体裁、读者、目的、保护项和证据边界；写后运行 `python3 scripts/reviewwrite_gate.py <response-path>`，只使用门禁成功后的标准输出作为正文；出现问题时最多回改两轮，仍未通过则阻断交付。不要把标签、`review_report`、`revision_plan`、工具过程或交接状态拼接进正式正文。完整协议见 [agent-handoff.md](agent-handoff.md)。
+
+Windows、macOS 和 Linux 均按 UTF-8 读取正文并输出诊断；Windows 路径不能按 `/` 分隔符做字符串假设。仓库 CI 的通过只证明脚本矩阵，不等于每个宿主平台已经完成 UI 发现与会话刷新。
 
 升级后应刷新宿主的 Skill 发现缓存或新建会话，并检查 front matter 中的 `version`；不能在活跃写作任务中途替换规则。

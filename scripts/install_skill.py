@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Sequence
 
 import package_skill
+from runtime_io import configure_utf8_stdio
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -238,6 +239,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.list_targets:
