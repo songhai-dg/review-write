@@ -28,7 +28,7 @@ from runtime_io import configure_utf8_stdio
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.8.4"
+USER_AGENT = "ReviewWrite-Updater/0.8.5"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 

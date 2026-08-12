@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -121,15 +122,14 @@ class ReviewWriteLintTests(unittest.TestCase):
                     "owner/repo", "stable", 24, now=100_000
                 )
                 cache_file.write_text("{}", encoding="utf-8")
-                with mock.patch.object(Path, "stat") as stat:
-                    stat.return_value.st_mtime = 100_000 - 23 * 3600
-                    fresh = reviewwrite_update.cache_status(
-                        "owner/repo", "stable", 24, now=100_000
-                    )
-                    stat.return_value.st_mtime = 100_000 - 25 * 3600
-                    stale = reviewwrite_update.cache_status(
-                        "owner/repo", "stable", 24, now=100_000
-                    )
+                os.utime(cache_file, (100_000 - 23 * 3600,) * 2)
+                fresh = reviewwrite_update.cache_status(
+                    "owner/repo", "stable", 24, now=100_000
+                )
+                os.utime(cache_file, (100_000 - 25 * 3600,) * 2)
+                stale = reviewwrite_update.cache_status(
+                    "owner/repo", "stable", 24, now=100_000
+                )
         self.assertTrue(missing["check_due"])
         self.assertTrue(fresh["cache_fresh"])
         self.assertFalse(fresh["check_due"])
@@ -312,7 +312,7 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertNotIn("RW-W-222", {item.rule_id for item in body})
 
     def test_question_and_exclamation_headings_are_not_flattened(self) -> None:
-        text = "# 为什么现在调整？\n# 立即停止！\n# Version 0.8.4\n"
+        text = "# 为什么现在调整？\n# 立即停止！\n# Version 0.8.5\n"
         self.assertNotIn(
             "RW-W-222",
             {item.rule_id for item in reviewwrite_lint.lint_text(text)},
