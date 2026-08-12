@@ -15,6 +15,7 @@ Release 中的 `.skill` 运行时包只包含：
 - 一个不含真实字体名称的 `examples/office-qa/font-profile.example.json` 配置结构样例。
 
 默认写作任务不会调用更新器。更新器只有在用户或平台明确启用更新检查/下载时才联网；它可能读取 `GITHUB_TOKEN` 以访问 GitHub API，并在要求 attestation 时调用本机 `gh`。它只检查和下载 Release 资产，不上传用户正文、不修改输入文件，也不自动覆盖已安装技能。更新缓存和下载文件写入平台缓存目录或用户通过 `REVIEWWRITE_CACHE_DIR` 指定的目录。
+`reviewwrite_update.py status` 只读取本地版本和缓存元数据，不联网；缓存过期后的 `check` 也应安排在当前写作任务完成后。检查过程不使用随机触发。
 `reviewwrite_lint.py` 只读取用户指定的本地文件或标准输入，输出诊断结果；它不联网、不读取凭证、不修改输入文件，也不会上传正文。`office_qa.py` 默认只读取用户指定的 `.docx`/`.pptx` 和可选的本地 profile/字体清单；它不会修改或上传输入文件。仅当调用者显式使用渲染模式时，它才会尝试调用本机可发现的 `soffice` 和可选 `pdftoppm`，并只向调用者指定的输出目录（或临时目录）写入 PDF/PNG 预览。
 `reviewwrite_gate.py` 默认要求结构化响应，抽取唯一 `deliverable_body` 后执行严格预检；通过时只输出正文，失败时不输出正文。它不联网、不修改输入，也不替代事实与引用核验。
 `long_document_review.py` 只读取用户指定的 UTF-8 文本或标准输入，按有限重叠分块调用本地预检器，并在本地生成行号、数字、标题、术语变体和重复段落索引；它不联网、不读取凭证、不修改输入文件，也不会上传正文。

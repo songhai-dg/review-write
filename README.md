@@ -18,7 +18,7 @@
 
 ## 中文
 
-ReviewWrite 0.8.3 增加可执行交付门禁：高风险正式写作、双语专业文本和超长文档进入先审后写闭环；结构化响应必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文。它不会为了“具有人味”编造经历、数据、来源或细节。
+ReviewWrite 0.8.4 增加标题句号检查和确定性更新策略：新会话首次调用只读本地版本与缓存，缓存过期后在当前任务完成时联网刷新，不随机检查、不在每次调用时联网。结构化响应仍必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文；它不会为了“具有人味”编造经历、数据、来源或细节。
 
 ### 先审后写，保护事实，交付正文
 
@@ -93,6 +93,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 - 识别空泛强化和公式化转折，但必须按体裁、上下文与证据判断，不使用生硬禁词表；
 - 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举；
 - 识别“值得注意的是”“总的来说”、无来源“研究表明”、连续“我们可以看到……这说明……”、翻译腔和对称句式堆叠；
+- 检查 Markdown 标题末尾误带句号的情况；正文中的正常句号不触发此项，问号、感叹号和版本号标题保留；
 - 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件；
 - 对超长 UTF-8 文本提供分块预检和全局一致性索引；明确报告覆盖范围，不把部分审核声称为全文完成。
 
@@ -121,6 +122,7 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt
 | 话语填充与重复总结 `RW-W-216/RW-W-217` | 提醒读者注意或重复收束，却没有新增信息 | “值得注意的是”“总的来说” | 直接写新增事实、判断、适用范围或行动；单纯重复时删除 |
 | 模糊权威与推论旁白 `RW-W-218/RW-W-220` | 无可定位来源的背书，或连续用观察话术推进结论 | “研究表明”“我们可以看到……这说明……” | 补真实来源和推论条件；无法核验时改为有限判断 |
 | 翻译腔与对称句式堆叠 `RW-W-219/RW-W-221` | 直译句法或多组平衡结构替代信息取舍 | “对于企业而言，进行一个……”“既要……也要……”连续出现 | 按目标语言重组主谓宾；按事实、判断和行动重排，单个功能性句式可保留 |
+| 标题末尾句号 `RW-W-222` | Markdown 标题误带句末句号 | `# 项目实施方案。` | 删除标题末尾句号；问号、感叹号和版本号不机械改动 |
 | 宣传腔与格式模板 `RW-W-204/RW-W-205` | 空泛赋能、固定卖点、标签式列表 | “全面赋能”“打造新生态” | 结合政策、营销和公文体裁判断，不使用跨体裁禁词 |
 | 技术评论叠加信号 `RW-W-209—RW-W-212` | 模型/推理/设备文本中的反转、重要性、用户泛化、预测和数字 | “这个细节很关键”+“大多数用户”+“更可能” | 只在 `public-article`/`technical-commentary` 语境告警；要求补机制、指标、来源和条件 |
 | 机械枚举 `RW-W-213` | 三个以上句首“第一、第二、第三/首先、其次、最后” | 全文每段都用同一排序节奏 | `warn`；先区分事实、证据、判断、行动；政策条文、方法步骤和正式清单可保留 |
@@ -194,7 +196,12 @@ python3 scripts/package_skill.py
 
 ### 更新与发布
 
-ReviewWrite 默认只提示更新，不在活跃写作任务中静默替换 Skill。联网检查最多每 24 小时一次；宿主平台已有原生版本管理时优先使用平台渠道。
+ReviewWrite 不随机检查，也不在每次调用时联网。新会话第一次调用只读取本地版本和缓存；缓存超过 24 小时时，当前写作完成后再联网刷新。默认只提示新版；可信环境可以自动下载 patch，但安装和会话刷新仍独立执行。minor/major 需要明确升级，宿主平台已有原生版本管理时优先使用平台渠道。
+
+```bash
+python3 scripts/reviewwrite_update.py status --format json  # 始终只读本地
+python3 scripts/reviewwrite_update.py check --format json   # 仅在任务结束且缓存过期时
+```
 
 版本采用双轨制：有证据的小改进进入 edge patch；通过完整回归和人工 review 后提升为 stable minor；没有有效变化就不发布。详见[运营策略](OPERATIONS.md)和[更新策略](references/update-policy.md)。
 
@@ -296,6 +303,7 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Discourse filler/redundant summary `RW-W-216/RW-W-217` | Attention markers or closure without new information | “It is worth noting”, “Overall” | State the new fact, judgment, scope, or action directly |
 | Vague authority/inference narration `RW-W-218/RW-W-220` | Unlocatable attribution or stacked “we can see/this shows” narration | “Research shows”, “We can see…this shows…” | Add a real source and inference conditions, or narrow the claim |
 | Translationese/symmetric stacking `RW-W-219/RW-W-221` | Source-language syntax or repeated balanced clauses replacing information choices | literal “conduct an analysis” structures; repeated “both…and…” | Rebuild target-language syntax and organize by fact, judgment, and action |
+| Heading-final period `RW-W-222` | A Markdown heading is emitted as a full sentence with a terminal period | `# Implementation plan.` | Remove the terminal period; keep functional question marks, exclamation marks, and version numbers |
 
 Coverage includes `zh-CN` and general professional English across papers, grants, public articles, technical commentary, policy, official documents, reports, memos, marketing, and bilingual writing. Findings are review signals, not a “human score” or detector-evasion promise.
 
@@ -366,7 +374,7 @@ python3 scripts/package_skill.py
 
 ### Updates and release cadence
 
-ReviewWrite notifies by default and never replaces a Skill during an active writing task. Network checks are cached for up to 24 hours. A host platform's native update channel takes precedence when available.
+ReviewWrite uses a deterministic update policy: the first invocation in a new session reads only local version/cache state; a due network refresh runs after the active writing task and at most once per 24 hours. It does not use random checks or replace a Skill during an active task. The default is notify; trusted environments may auto-download patch releases, while installation and session refresh remain explicit. A host platform's native update channel takes precedence when available.
 
 Qualified small improvements enter the edge channel as patches. A stable minor is promoted only after full regressions and human review. No meaningful improvement means no release. See [operations](OPERATIONS.md) and the [update policy](references/update-policy.md).
 

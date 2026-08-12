@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.8.3
+version: 0.8.4
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -204,6 +204,7 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 - 短距离内是否叠加二元反转、重要性宣告、用户群体泛化和无条件预测；技术评论中的组合信号应作为警告，不应据此断言作者身份；
 - 技术数字、因果判断和行业预测是否有口径、对象、来源、适用范围和限制条件；
 - 公众号或技术评论是否在多个句段重复使用“第一、第二、第三/首先、其次、最后”，导致段落功能和语气没有变化；正式条文、方法步骤和清单结构可保留；
+- Markdown 标题是否被模型误写成带句号的完整句子；问号、感叹号和版本号等有功能的标题标点不机械删除；
 - 作者声音是否被通用模型口吻覆盖；
 - 正式正文是否混入内部过程。
 
@@ -255,9 +256,9 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 
 ## 可选更新检查
 
-只有平台或用户已明确启用更新检查时，才在正文任务完成后执行 `scripts/reviewwrite_update.py check --format json`。检查结果使用 24 小时缓存；没有更新时保持安静，有更新时只提示版本和发行页。
+只有平台或用户已明确启用更新检查时，才执行自动检查。每个新会话首次调用 ReviewWrite 时运行 `scripts/reviewwrite_update.py status --format json`；它只读本地版本和缓存，不联网。结果为 `cache-fresh` 时本会话不再检查；结果为 `check-due` 时，等当前正文任务完成后再执行 `scripts/reviewwrite_update.py check --format json`。联网结果使用 24 小时缓存；没有更新时保持安静，有更新时只提示版本和发行页。
 
-不得在一次活跃写作任务中下载或替换 Skill，不得覆盖 Git 工作副本。宿主平台已有原生版本管理时，优先使用平台更新渠道。详细规则见 [references/update-policy.md](references/update-policy.md)。
+检查不是随机的，也不是每次调用都联网。不得在一次活跃写作任务中下载或替换 Skill，不得覆盖 Git 工作副本。默认 `notify`；可信环境可选择在任务结束后自动下载 patch，但安装、刷新缓存或新建会话仍是独立步骤。minor/major 默认只提示并要求明确升级。宿主平台已有原生版本管理时，优先使用平台更新渠道。详细规则见 [references/update-policy.md](references/update-policy.md)。
 
 ## 输出与确定性自检
 

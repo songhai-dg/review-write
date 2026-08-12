@@ -104,4 +104,4 @@ python3 scripts/reviewwrite_gate.py body.txt --input-mode raw
 
 ## 版本与会话刷新
 
-宿主安装或发现 Skill 后，应读取其 front matter 的 `version`，在会话开始时确认当前版本与目标安装源一致。升级后刷新 Skill 发现缓存或新建会话；不要在活跃写作任务中途替换规则。
+宿主安装或发现 Skill 后，应读取其 front matter 的 `version`。每个新会话首次调用时只运行本地 `reviewwrite_update.py status --format json`；缓存过期也要等当前任务结束后再联网 `check`。不随机检查，不在每次调用中联网。升级后刷新 Skill 发现缓存或新建会话；不要在活跃写作任务中途替换规则。

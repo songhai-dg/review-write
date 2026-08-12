@@ -227,6 +227,15 @@ def validate() -> list[str]:
             errors.append("Office QA 格式声明必须为 docx 与 pptx")
         if compatibility.get("skill_id") != "reviewwrite":
             errors.append("技术 Skill ID 必须为 reviewwrite")
+        update_policy = release_policy.get("update", {})
+        if update_policy.get("default_policy") != "notify":
+            errors.append("默认更新策略必须为 notify")
+        if update_policy.get("check_interval_hours") != 24:
+            errors.append("更新联网检查间隔必须为 24 小时")
+        if update_policy.get("randomized_checks") is not False:
+            errors.append("更新检查不得使用随机策略")
+        if "after-active-task" not in str(update_policy.get("check_trigger", "")):
+            errors.append("过期缓存必须在活跃任务结束后刷新")
         if set(compatibility.get("natural_language_aliases", [])) != {"审写", "ReviewWrite"}:
             errors.append("自然语言简称必须为 审写 与 ReviewWrite")
         manifest = json.loads(

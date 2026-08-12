@@ -111,6 +111,60 @@ class ReviewWriteLintTests(unittest.TestCase):
             Path("/tmp/custom-cache").resolve() / "reviewwrite",
         )
 
+    def test_update_cache_status_is_local_and_deterministic(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            cache_file = Path(directory) / "release.json"
+            with mock.patch.object(reviewwrite_update, "_cache_file", return_value=cache_file):
+                missing = reviewwrite_update.cache_status(
+                    "owner/repo", "stable", 24, now=100_000
+                )
+                cache_file.write_text("{}", encoding="utf-8")
+                with mock.patch.object(Path, "stat") as stat:
+                    stat.return_value.st_mtime = 100_000 - 23 * 3600
+                    fresh = reviewwrite_update.cache_status(
+                        "owner/repo", "stable", 24, now=100_000
+                    )
+                    stat.return_value.st_mtime = 100_000 - 25 * 3600
+                    stale = reviewwrite_update.cache_status(
+                        "owner/repo", "stable", 24, now=100_000
+                    )
+        self.assertTrue(missing["check_due"])
+        self.assertTrue(fresh["cache_fresh"])
+        self.assertFalse(fresh["check_due"])
+        self.assertTrue(stale["check_due"])
+
+    def test_update_status_command_never_calls_release_api(self) -> None:
+        import contextlib
+        import io
+
+        policy = {
+            "repository": "owner/repo",
+            "current_version": "0.8.3",
+            "update": {
+                "default_policy": "notify",
+                "check_interval_hours": 24,
+            },
+        }
+        with mock.patch.object(reviewwrite_update, "load_policy", return_value=policy), \
+             mock.patch.object(
+                 reviewwrite_update,
+                 "cache_status",
+                 return_value={
+                     "cache_exists": True,
+                     "cache_fresh": True,
+                     "check_due": False,
+                     "age_hours": 1.0,
+                 },
+             ), \
+             mock.patch.object(reviewwrite_update, "_select_release") as network, \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            code = reviewwrite_update.main(["status", "--format", "json"])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(output.getvalue())["status"], "cache-fresh")
+        network.assert_not_called()
+
     def test_clean_policy_has_no_findings(self) -> None:
         text = (ROOT / "tests/fixtures/clean_policy.zh.md").read_text(encoding="utf-8")
         self.assertEqual(reviewwrite_lint.lint_text(text), [])
@@ -247,6 +301,22 @@ class ReviewWriteLintTests(unittest.TestCase):
         )
         self.assertNotIn("RW-W-218", {item.rule_id for item in cited})
         self.assertIn("RW-W-218", {item.rule_id for item in previous_sentence})
+
+    def test_markdown_heading_period_is_reviewed_but_body_period_is_not(self) -> None:
+        heading = reviewwrite_lint.lint_text(
+            "# 项目实施方案。\n## “改革已经完成。”\n正文内容。"
+        )
+        body = reviewwrite_lint.lint_text("项目实施方案。\n正文内容。")
+        self.assertIn("RW-W-222", {item.rule_id for item in heading})
+        self.assertEqual(sum(item.rule_id == "RW-W-222" for item in heading), 2)
+        self.assertNotIn("RW-W-222", {item.rule_id for item in body})
+
+    def test_question_and_exclamation_headings_are_not_flattened(self) -> None:
+        text = "# 为什么现在调整？\n# 立即停止！\n# Version 0.8.4\n"
+        self.assertNotIn(
+            "RW-W-222",
+            {item.rule_id for item in reviewwrite_lint.lint_text(text)},
+        )
 
     def test_technical_commentary_detects_stacked_signals(self) -> None:
         draft = (

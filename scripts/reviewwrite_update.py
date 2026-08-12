@@ -28,7 +28,7 @@ from runtime_io import configure_utf8_stdio
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "release-policy.json"
-USER_AGENT = "ReviewWrite-Updater/0.8.3"
+USER_AGENT = "ReviewWrite-Updater/0.8.4"
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
 
@@ -125,6 +125,33 @@ def _select_release(repository: str, channel: str) -> dict[str, Any]:
 def _cache_file(repository: str, channel: str) -> Path:
     safe_repo = repository.replace("/", "--")
     return cache_root() / f"release-{safe_repo}-{channel}.json"
+
+
+def cache_status(
+    repository: str,
+    channel: str,
+    max_age_hours: int,
+    *,
+    now: float | None = None,
+) -> dict[str, Any]:
+    """Inspect update-cache freshness without making a network request."""
+    path = _cache_file(repository, channel)
+    if not path.is_file():
+        return {
+            "cache_exists": False,
+            "cache_fresh": False,
+            "check_due": True,
+            "age_hours": None,
+        }
+    current_time = time.time() if now is None else now
+    age_hours = max(0.0, current_time - path.stat().st_mtime) / 3600
+    fresh = age_hours <= max_age_hours
+    return {
+        "cache_exists": True,
+        "cache_fresh": fresh,
+        "check_due": not fresh,
+        "age_hours": round(age_hours, 3),
+    }
 
 
 def release_info(
@@ -245,7 +272,7 @@ def download_verified(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="安全检查或下载 ReviewWrite 更新")
-    parser.add_argument("command", choices=("check", "download"))
+    parser.add_argument("command", choices=("status", "check", "download"))
     parser.add_argument("--repo", help="GitHub 仓库，格式 owner/repo")
     parser.add_argument("--channel", choices=("stable", "edge"), default="stable")
     parser.add_argument("--policy", choices=("off", "notify", "auto-patch", "auto-minor"))
@@ -271,6 +298,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             update_policy = args.policy or update_config["default_policy"]
             if update_policy == "off":
                 payload = {"status": "disabled", "reason": "update policy is off"}
+            elif args.command == "status":
+                current = Version.parse(str(config["current_version"]))
+                cache = cache_status(
+                    repository,
+                    args.channel,
+                    int(update_config["check_interval_hours"]),
+                )
+                payload = {
+                    "status": "check-due" if cache["check_due"] else "cache-fresh",
+                    "current": str(current),
+                    "channel": args.channel,
+                    "network_used": False,
+                    **cache,
+                }
             else:
                 release, cached = release_info(
                     repository,

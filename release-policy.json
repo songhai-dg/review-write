@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "repository": "songhai-dg/review-write",
-  "current_version": "0.8.3",
+  "current_version": "0.8.4",
   "channels": {
     "stable": {
       "schedule": "weekly-if-qualified",
@@ -16,6 +16,8 @@
   },
   "update": {
     "default_policy": "notify",
+    "check_trigger": "first-skill-invocation-cache-only; refresh-after-active-task-when-due",
+    "randomized_checks": false,
     "allowed_policies": [
       "off",
       "notify",
@@ -23,6 +25,7 @@
       "auto-minor"
     ],
     "check_interval_hours": 24,
+    "notify_timing": "after-active-task",
     "apply_timing": "after-task-or-scheduled",
     "never_update_during_active_task": true,
     "never_overwrite_git_checkout": true,
