@@ -39,6 +39,7 @@ REQUIRED_FILES = (
     "references/office-qa.md",
     "references/font-profiles.md",
     "references/office-integrations.md",
+    "references/provenance-integrity.md",
     "references/competitor-evaluation.md",
     "automation/pilot-20.md",
     "automation/pilot-20.json",
@@ -57,6 +58,7 @@ REQUIRED_FILES = (
     "scripts/office_qa.py",
     "scripts/long_document_review.py",
     "scripts/reviewwrite_route.py",
+    "scripts/reviewwrite_provenance.py",
 )
 
 

@@ -12,7 +12,7 @@ from runtime_io import configure_utf8_stdio
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.8.5"
+VERSION = "0.9.0"
 SKILL_ID = "reviewwrite"
 
 
@@ -27,6 +27,7 @@ def bundle_files() -> list[Path]:
         ROOT / "scripts" / "reviewwrite_update.py",
         ROOT / "scripts" / "long_document_review.py",
         ROOT / "scripts" / "reviewwrite_route.py",
+        ROOT / "scripts" / "reviewwrite_provenance.py",
         ROOT / "release-policy.json",
         ROOT / "examples" / "office-qa" / "font-profile.example.json",
     ]

@@ -18,7 +18,7 @@
 
 ## 中文
 
-ReviewWrite 0.8.5 提供标题句号检查和确定性更新策略：新会话首次调用只读本地版本与缓存，缓存过期后在当前任务完成时联网刷新，不随机检查、不在每次调用时联网。结构化响应仍必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文；它不会为了“具有人味”编造经历、数据、来源或细节。
+ReviewWrite 0.9.0 增加来源与交付完整性只读审计，并保留标题句号检查和确定性更新策略：新会话首次调用只读本地版本与缓存，缓存过期后在当前任务完成时联网刷新，不随机检查、不在每次调用时联网。结构化响应仍必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文；它不会为了“具有人味”编造经历、数据、来源或细节，也不会移除或伪装 AI 来源标记。
 
 ### 先审后写，保护事实，交付正文
 
@@ -41,6 +41,10 @@ python3 scripts/long_document_review.py path/to/long-draft.md --format json
 ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件，指出需要核实的部分，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
 
 它背后的方法论来自教授团队与专业研发团队长期从事高质量写作、审稿和交付的经验积累，不是把几个“去 AI 痕迹”词表拼在一起。ReviewWrite 关注的是主张是否有证据、限定条件是否完整、体裁是否合适，以及修改后能否真正交付。
+
+### 来源透明度：只审计，不清除
+
+ReviewWrite 可以检查文件中可观察的 Content Credentials、C2PA/JUMBF 或 SynthID 相关线索，并定位可能影响交付完整性的 Unicode 格式控制字符。审计结果严格区分“已发现”“未发现”和“无法判断”，不把来源线索缺失解释成来源不存在；输入文件保持不变，不提供水印移除、来源伪装或检测器规避功能。
 
 ### 名称与调用：短，但不混乱
 
@@ -321,7 +325,7 @@ Four synthetic cases show the draft, revision, and verification result. Strict p
 
 ### Security and provenance
 
-The release bundle contains the Skill, references, one configuration-structure example, local text/Office QA scripts, and an optional updater. The default writing path stays local: it does not read credentials, modify or upload input prose or source Office files. Only an explicitly enabled update check contacts a Release source; only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [SECURITY.md](SECURITY.md) for the full boundary.
+The release bundle contains the Skill, references, one configuration-structure example, local text/Office QA/provenance-audit scripts, and an optional updater. The default writing path stays local: it does not read credentials, modify or upload input prose or source Office files. The provenance audit is read-only: it reports observable Content Credentials/C2PA/JUMBF or SynthID references and Unicode format controls, distinguishes detected, referenced, and indeterminate states, and never removes or disguises source signals. Only an explicitly enabled update check contacts a Release source; only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [Security](SECURITY.md) and [provenance-integrity](references/provenance-integrity.md) for the full boundary.
 
 ### Office delivery QA: audit before any repair
 

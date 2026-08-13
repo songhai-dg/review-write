@@ -46,7 +46,7 @@ def files(version: str, output: Path) -> list[Path]:
         "请使用所在平台自己的 Skill 安装或导入机制；如果仓库已在当前目录，直接以当前目录为安装来源。"
         "平台不支持、没有权限或无法访问来源时，说明限制并停止。"
     )
-    short = "审写 · ReviewWrite：面向论文、基金、政策、报告、公文、公众号和中英文专业写作，先审后写；支持十万字级长文分块审查，不拿幻觉换人味，保护事实、数字、引用、术语、主张与限定条件。"
+    short = "审写 · ReviewWrite：面向论文、基金、政策、报告、公文、公众号和中英文专业写作，先审后写；支持十万字级长文分块审查和来源完整性只读审计，不拿幻觉换人味，保护事实、数字、引用、术语、主张与限定条件。"
     long = (
         "中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）与中财数碳联合开发的审写 · ReviewWrite，"
         "把专业写作中的评审、改写和复核放进同一条工作流。它根据体裁、读者和证据动态判断修改幅度，"
@@ -56,13 +56,14 @@ def files(version: str, output: Path) -> list[Path]:
         "产品由教授团队与专业研发团队共同开发维护，方法论来自长期高质量写作、审稿和交付经验，不是纯粹的 AI 去痕迹词表。"
         "面对十万字及更长文本，它按章节和段落分块，保留全文行号与块号，建立数字、标题和术语一致性索引，不把片段检查包装成全文完成。"
         "长文回归测试已覆盖 324,015 个字符、55 个分块，并将故意放入的模型自述定位到全文第 9,001 行；这证明的是定位和索引能力，不是未经验证的语义准确率。"
+        "本版本新增来源与交付完整性只读审计：报告可观察的 C2PA/JUMBF、SynthID 相关线索和 Unicode 格式控制字符，严格区分已发现、未发现和无法判断；不删除水印，不伪装来源，不规避检测。"
         "它不承诺规避检测，也不通过制造错误来模仿所谓人味。"
     )
     posts = {
         "github-release.md": f"# 审写 · ReviewWrite v{version}\n\n{long}\n\n- 官方仓库：{link['github']}\n- 国内镜像：{link['gitee']}\n- 案例：{link['examples']}\n- SkillHub：{link['skillhub']}\n",
-        "skillhub-update.md": f"## 版本更新 v{version}\n\n{short}\n\n更新说明：增加中英跨语言专业审写，保护术语、主张、限定条件和责任边界；核心原则仍是先审后写、保护事实、正文与说明分离。\n\n项目地址：{link['github']}\n国内镜像：{link['gitee']}\n",
+        "skillhub-update.md": f"## 版本更新 v{version}\n\n{short}\n\n更新说明：增加来源与交付完整性只读审计，区分已发现、未发现和无法判断；不删除来源标记，不提供水印移除或检测规避。核心原则仍是先审后写、保护事实、正文与说明分离。\n\n项目地址：{link['github']}\n国内镜像：{link['gitee']}\n",
         "agent-directory.md": f"## 审写 · ReviewWrite\n\n{short}\n\n安装来源：{link['github']}\nGitHub 不可访问时：{link['gitee']}\n示例：{link['examples']}\n",
-        "wechat-and-video.md": f"# 对外宣传文案\n\n{long}\n\nReviewWrite 不拿幻觉换人味，不为了自然而主动编造经历、数据、来源或细节。适合需要处理论文、基金、政策材料、研究报告和公众号文章的人：先把问题看清，再动文字；该保留的数字、引用和限定条件不被改写带走。\n\n了解与安装：{link['github']}\n国内镜像：{link['gitee']}\nSkillHub：{link['skillhub']}\n",
+        "wechat-and-video.md": f"# 对外宣传文案\n\n{long}\n\nReviewWrite 不拿幻觉换人味，不为了自然而主动编造经历、数据、来源或细节。它也不提供所谓‘一键清除水印’：来源透明度应当被审计和保留，而不是被伪装。适合需要处理论文、基金、政策材料、研究报告和公众号文章的人：先把问题看清，再动文字；该保留的数字、引用和限定条件不被改写带走。\n\n了解与安装：{link['github']}\n国内镜像：{link['gitee']}\nSkillHub：{link['skillhub']}\n",
         "install-prompt.txt": install + "\n",
     }
     manifest = {

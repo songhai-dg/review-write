@@ -12,7 +12,7 @@ metadata:
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.8.5
+version: 0.9.0
 license: MIT
 platforms: [linux, macos, windows]
 ---
@@ -113,6 +113,7 @@ platforms: [linux, macos, windows]
 - 新手任务、最小输入和常见问答：[references/quickstart.md](references/quickstart.md)
 - DOCX/PPTX 字体、目标环境和渲染门禁：[references/office-qa.md](references/office-qa.md)，必要时再读取 [references/font-profiles.md](references/font-profiles.md) 与 [references/office-integrations.md](references/office-integrations.md)；
 - AI 写作痕迹、不同模型常见风格与 humanizer 边界：[references/ai-writing-signals.md](references/ai-writing-signals.md)；当用户要求减少 AI 味、提高初稿自然度、比较 humanizer 或分析模型文风时读取；
+- 来源与交付完整性审计：[references/provenance-integrity.md](references/provenance-integrity.md)；当任务涉及 AI 来源标记、Content Credentials、SynthID、不可见字符或 AI 使用披露时读取；只读审计，不移除来源信号；
 - 对应体裁：`references/genre-packs/` 下的一个主要体裁包；只有混合体裁才读取两个。
 - 技术解读/产业评论：如果文本同时讨论模型、参数、推理、设备或性能，读取 `references/genre-packs/technical-commentary.md`；它只约束技术口径，不把公众号节奏改成论文腔。
 
@@ -179,6 +180,14 @@ python3 scripts/reviewwrite_gate.py <response-path>
 该命令严格解析唯一的 `deliverable_body`，只对抽取后的正文运行严格 linter；通过时只向标准输出写入不带标签的正文，失败时不输出正文。评审报告可以引用原文中的问题句，不能因为评审证据触发正文泄漏失败；但这不豁免正文自身的泄漏。若输入本来就是纯正文，必须显式使用 `--input-mode raw`，避免把混合响应误当成正文。
 
 当正文本身以某种被授权的语境为讨论对象时（AI 安全与提示注入研究、提示模板与软件文档、AI 辅助披露声明、对话转写、编辑审计报告），相关术语可能是主题而非泄漏。此时用 `--context` 声明语境，linter 会把对应硬失败降级为警告，保留人工确认信号而不是无差别拦截；用 `--genre` 声明体裁时，会放宽该体裁中功能性的格式警告（如公文、政策条文的结构化条目）。
+
+涉及来源标记或交付完整性时，可运行只读审计：
+
+```bash
+python3 scripts/reviewwrite_provenance.py path/to/file --format json
+```
+
+它只报告可观察来源线索和格式控制字符，不删除元数据、Content Credentials、SynthID 标记或不可见字符；未发现线索不等于来源信息不存在。
 
 ```bash
 python3 scripts/reviewwrite_lint.py <response-path> --surface deliverable_body --context ai-safety
