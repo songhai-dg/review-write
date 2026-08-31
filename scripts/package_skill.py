@@ -12,7 +12,7 @@ from runtime_io import configure_utf8_stdio
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.9.0"
+VERSION = "1.0.0"
 SKILL_ID = "reviewwrite"
 
 
@@ -22,6 +22,7 @@ def bundle_files() -> list[Path]:
         ROOT / "agents" / "openai.yaml",
         ROOT / "scripts" / "reviewwrite_lint.py",
         ROOT / "scripts" / "reviewwrite_gate.py",
+        ROOT / "scripts" / "reviewwrite_semantic.py",
         ROOT / "scripts" / "runtime_io.py",
         ROOT / "scripts" / "office_qa.py",
         ROOT / "scripts" / "reviewwrite_update.py",

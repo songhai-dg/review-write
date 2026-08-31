@@ -4,11 +4,13 @@
 
 **不拿幻觉换“人味”：不编造经历、数据、来源、案例或细节。**
 
+**1.0 双层门禁：规则未命中，不再等于正文可以交付。**
+
 *Review before rewrite. Keep the facts. Lose the slop.*
 
 不是 AI 检测规避器；是专业写作的交付质量控制。
 
-可复现证据：4 份合成案例的严格预检从 **14 fail / 23 warn** 降至 **0 / 0**；38 项受保护字面量通过逐字回归检查。另有一项 **324,015 字符、55 个分块**的长文回归，能将问题定位回全文第 9,001 行。[查看完整报告](examples/simulation/RUN_REPORT.md)
+可复现证据：4 份合成案例在 1.0.0 规则下从 **14 fail / 24 warn** 降至 **0 / 0**；38 项受保护字面量通过逐字回归检查。另有一项 **324,015 字符、55 个分块**的长文回归，能将问题定位回全文第 9,001 行。[查看完整报告](examples/simulation/RUN_REPORT.md)
 
 [中文](#中文) · [English](#english)
 
@@ -18,7 +20,9 @@
 
 ## 中文
 
-ReviewWrite 0.9.0 增加来源与交付完整性只读审计，并保留标题句号检查和确定性更新策略：新会话首次调用只读本地版本与缓存，缓存过期后在当前任务完成时联网刷新，不随机检查、不在每次调用时联网。结构化响应仍必须经过正文抽取和严格终检，通过后才输出不带内部标签的正文；它不会为了“具有人味”编造经历、数据、来源或细节，也不会移除或伪装 AI 来源标记。
+ReviewWrite 1.0.0 从“词组预检”升级为“确定性规则 + 交付语义复核”双层门禁。它检查标题和结构是否面向读者、提示词和任务服从是否泄漏、自证式口气是否替代事实、主张是否越过证据，以及数字、引用和限定条件是否保持。五项复核与最终正文的 SHA-256 绑定，正文改一个字符都必须重新复核；规则没有命中，也不能再直接冒充审核通过。
+
+这不是扩充一份禁词表。“真正、完全、显著、不是……而是……”有明确比较、统计、定义或规范功能时可以保留；没有新增事实，只在替结论自我认证时，才进入回改。
 
 ### 先审后写，保护事实，交付正文
 
@@ -90,6 +94,7 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 - 支持超长文档审写：对十万字及更长文本进行章节优先分块，使用一次性全文行索引定位发现项、中文数字和标题，并限制结果体积，避免重复扫描和把片段检查误报成全文完成；
 - 根据语言、读者和真实体裁选择表达，不强套模板；
 - 可作为宿主智能体的写作质量控制层：风险路由负责决定是否接入，可执行门禁负责抽取、严格终检和“失败时不输出正文”，问题最多回改两轮后再交付；
+- 1.0.0 增加交付语义控制：标题与结构读者化、内部过程分离、自证删除、主张—证据边界和事实限定保持五项复核，与最终正文哈希绑定；
 - 增加技术解读/产业评论路由：检查模型、推理、设备、内存和性能主张中的叠加式模板信号与技术口径；
 - 默认保护数字、引用、专名、义务和限定条件；
 - 将评审、修改稿和复核分开，并对正式正文做泄漏预检；
@@ -98,12 +103,14 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 - 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举；
 - 识别“值得注意的是”“总的来说”、无来源“研究表明”、连续“我们可以看到……这说明……”、翻译腔和对称句式堆叠；
 - 检查 Markdown 标题末尾误带句号的情况；正文中的正常句号不触发此项，问号、感叹号和版本号标题保留；
+- 检查 Markdown、Setext 和文首短标题中的“这才是、真正、完全、不是……而是……”式编辑判断，并识别隐性任务服从、自证式结论、确定性强化、单次推理旁白、段落级堆叠、装饰横线和连续短横杠碎片；
 - 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件；
 - 对超长 UTF-8 文本提供分块预检和全局一致性索引；明确报告覆盖范围，不把部分审核声称为全文完成。
 
 ```bash
-# 结构化响应通过后，只输出不带标签的正文；失败时不输出正文
-python3 scripts/reviewwrite_gate.py path/to/response.txt
+# 先生成与正文绑定的语义复核记录，逐项完成复核，再执行最终门禁
+python3 scripts/reviewwrite_semantic.py init path/to/response.txt --output semantic-review.json
+python3 scripts/reviewwrite_gate.py path/to/response.txt --semantic-review semantic-review.json
 ```
 
 ### AI 风格与过程残留审查清单
@@ -118,6 +125,7 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt
 | 任务与编辑残留 `RW-F-004/RW-W-102` | 用户要求、改稿待办、版本过程 | “根据用户要求”“待补充”“下一轮修改” | 任务复述和编辑指令不得进入正文；评审报告可以引用 |
 | 工具/运行时残留 `RW-F-005` | 工具调用、Skill、Agent、内部路径和路由 | “我调用了工具”“SKILL.md”“working tree” | 正文 `blocker`；软件文档或审计报告需声明讨论语境 |
 | 内部契约术语 `RW-F-006` | 只供宿主/编辑流程使用的证据边界、验收标准、终检和 surface 名称 | “证据边界”“最终门禁”“deliverable_body” | 普通正文 `blocker`；法律分析、研究方法、软件文档等确实讨论该概念时声明授权语境 |
+| 隐性任务服从 `RW-F-007` | 未直说提示词，但叙述如何满足要求、采用文风或安排生成步骤 | “为了满足任务要求，本文将……” | 正文 `blocker`；直接写读者需要的内容 |
 | 工作流与聊天收尾 `RW-W-101/RW-W-103` | 过程预告、助手交接语 | “下面我将介绍”“希望这对你有帮助” | `warn`；只清理正文中的过程话术，不改真实对话转写 |
 | 空泛开场与重要性 `RW-W-201/RW-W-202/RW-W-207` | 时代背景、无标准的“重要/关键/全面提升” | “在当今时代”“这件事意义重大” | 改成主体、动作、对象、范围和依据；正式规范词保留 |
 | 公式化转折与悬念 `RW-W-203/RW-W-208` | 二元反转、悬念桥接和重复总结 | “不是……而是……”“换句话说”“最危险的地方” | 单次有逻辑可保留；连续堆叠或不增加信息时 `warn` |
@@ -127,6 +135,8 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt
 | 模糊权威与推论旁白 `RW-W-218/RW-W-220` | 无可定位来源的背书，或连续用观察话术推进结论 | “研究表明”“我们可以看到……这说明……” | 补真实来源和推论条件；无法核验时改为有限判断 |
 | 翻译腔与对称句式堆叠 `RW-W-219/RW-W-221` | 直译句法或多组平衡结构替代信息取舍 | “对于企业而言，进行一个……”“既要……也要……”连续出现 | 按目标语言重组主谓宾；按事实、判断和行动重排，单个功能性句式可保留 |
 | 标题末尾句号 `RW-W-222` | Markdown 标题误带句末句号 | `# 项目实施方案。` | 删除标题末尾句号；问号、感叹号和版本号不机械改动 |
+| 标题与自证语义 `RW-W-223—RW-W-227` | 标题中的编辑判断、自证式结论、确定性强化、单次推理旁白和段落堆叠 | “这才是真正的问题”“事实充分证明”“因此我们可以得出结论” | 改为对象、事实、条件和有限结论；有定义、比较、统计或规范功能的强词保留 |
+| 装饰横线与短横杠碎片 `RW-W-228/RW-W-229` | 独立横线和三个以上短标签式项目切碎正文 | `---`、连续“- 高效协同” | 改为连续正文或真实标题层级；法规条款、步骤和参数清单保留 |
 | 宣传腔与格式模板 `RW-W-204/RW-W-205` | 空泛赋能、固定卖点、标签式列表 | “全面赋能”“打造新生态” | 结合政策、营销和公文体裁判断，不使用跨体裁禁词 |
 | 技术评论叠加信号 `RW-W-209—RW-W-212` | 模型/推理/设备文本中的反转、重要性、用户泛化、预测和数字 | “这个细节很关键”+“大多数用户”+“更可能” | 只在 `public-article`/`technical-commentary` 语境告警；要求补机制、指标、来源和条件 |
 | 机械枚举 `RW-W-213` | 三个以上句首“第一、第二、第三/首先、其次、最后” | 全文每段都用同一排序节奏 | `warn`；先区分事实、证据、判断、行动；政策条文、方法步骤和正式清单可保留 |
@@ -139,7 +149,7 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt
 
 | 案例 | 问题稿 | 修改稿 | 主要改进 | 预检 |
 | --- | --- | --- | --- | --- |
-| 学术摘要 | [查看](examples/simulation/inputs/academic-abstract.zh.md) | [查看](examples/simulation/outputs/academic-abstract.zh.md) | 去除模型身份和推理泄漏，保留样本边界 | 5 fail / 4 warn → 0 / 0 |
+| 学术摘要 | [查看](examples/simulation/inputs/academic-abstract.zh.md) | [查看](examples/simulation/outputs/academic-abstract.zh.md) | 去除模型身份、推理泄漏和自证式结论，保留样本边界 | 5 fail / 5 warn → 0 / 0 |
 | 基金申请 | [查看](examples/simulation/inputs/grant-rationale.zh.md) | [查看](examples/simulation/outputs/grant-rationale.zh.md) | 删除宣传腔和待办，补清研究设计 | 3 fail / 6 warn → 0 / 0 |
 | 政策简报 | [查看](examples/simulation/inputs/policy-brief.zh.md) | [查看](examples/simulation/outputs/policy-brief.zh.md) | 清理工具残留，明确选项和证据缺口 | 2 fail / 8 warn → 0 / 0 |
 | 英文管理备忘录 | [查看](examples/simulation/inputs/executive-memo.en.md) | [查看](examples/simulation/outputs/executive-memo.en.md) | 直接呈现决策、约束和风险 | 4 fail / 5 warn → 0 / 0 |
@@ -192,7 +202,8 @@ few-shot 不是越大越好的模板库。每次最多选择三个：一个修�
 ```bash
 python3 scripts/reviewwrite_lint.py path/to/draft.md
 python3 scripts/reviewwrite_lint.py path/to/draft.md --strict
-python3 scripts/reviewwrite_gate.py path/to/structured-response.txt
+python3 scripts/reviewwrite_semantic.py init path/to/structured-response.txt --output semantic-review.json
+python3 scripts/reviewwrite_gate.py path/to/structured-response.txt --semantic-review semantic-review.json
 python3 scripts/validate_skill.py
 python3 -m unittest discover -s tests -v
 python3 scripts/package_skill.py
@@ -220,6 +231,10 @@ ReviewWrite 吸收并重新组织 Stop Slop、Humanizer-zh 和 skill-deslop 的�
 ---
 
 ## English
+
+ReviewWrite 1.0 adds a two-layer delivery gate: deterministic signals plus a semantic review bound to the exact final body by SHA-256. A clean regex scan is no longer sufficient to release a document. The required review covers reader-facing titles and structure, separation of instruction/process residue, removal of self-certifying rhetoric, claim-evidence boundaries, and preservation of facts and qualifications. Ornamental rules and stacked short-dash fragments are reviewed instead of being accepted as default formal prose.
+
+This is not a larger blacklist. Terms such as “truly,” “completely,” “significant,” or “not X but Y” may remain when they perform a necessary definitional, comparative, statistical, or normative function.
 
 ### Review first, then rewrite
 
@@ -273,6 +288,7 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 - technical commentary review for model, inference, device, memory, and performance claims, including composite template signals and scope checks;
 - context-sensitive routing by language, audience, locale, and discourse community;
 - an executable delivery gate that extracts the unique body, runs strict checks, emits body-only output on success, and emits no body on failure;
+- a five-part semantic review tied to the final body hash, so any post-review edit invalidates the review record;
 - protection for facts, numbers, citations, names, obligations, and qualifications;
 - separated review, revision, deliverable, and verification surfaces with leakage checks;
 - genre- and context-aware preflight: authorized cases such as an AI-safety paper discussing `system prompt`, or an official document using structured items, are declared with `--context`/`--genre` and downgraded or relaxed instead of hard-failing legitimate writing;
@@ -281,7 +297,8 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 - optional audit-only DOCX/PPTX delivery QA for Chinese/Latin font declarations, theme/inheritance uncertainty, confirmed-profile mismatches, target font inventories, and a render gate; it never silently rewrites a source Office file.
 
 ```bash
-python3 scripts/reviewwrite_gate.py path/to/response.txt
+python3 scripts/reviewwrite_semantic.py init path/to/response.txt --output semantic-review.json
+python3 scripts/reviewwrite_gate.py path/to/response.txt --semantic-review semantic-review.json
 ```
 
 ### AI-style and process-residue coverage
@@ -296,6 +313,7 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Task/editor residue `RW-F-004/RW-W-102` | User-task recap, TODOs, revision workflow | “based on the user request”, “TODO” | Remove from deliverables; review reports may quote the span |
 | Tool/runtime residue `RW-F-005` | Tool calls, Skill/Agent names, internal paths and routes | `tool call`, `SKILL.md`, `working tree` | `blocker` in deliverables; software docs/audits declare their context |
 | Internal contract residue `RW-F-006` | Host/editor-only terms such as evidence boundary, acceptance criteria, final gate, and surface names | `evidence boundary`, `final gate`, `deliverable_body` | `blocker` in ordinary deliverables; declare an authorized subject context when the concept itself is being discussed |
+| Latent instruction residue `RW-F-007` | Task compliance, style instructions, or generation order without explicit prompt terminology | “To satisfy the user request, this article will…” | `blocker`; deliver reader-facing content directly |
 | Workflow/chat handoff `RW-W-101/RW-W-103` | Process previews and assistant closings | “This section will…”, “Hope this helps” | `warn`; does not rewrite genuine dialogue transcripts |
 | Empty opening/significance `RW-W-201/RW-W-202/RW-W-207` | Generic era framing and unsupported emphasis | “in today’s world”, “highly significant” | Replace with actor, action, scope, standard, and evidence; preserve formal normative terms |
 | Formulaic contrast/bridge `RW-W-203/RW-W-208` | Binary reversals, suspense bridges, repeated summaries | “not X but Y”, “in other words”, “the most dangerous part” | One functional contrast may stay; stacked or empty uses warn |
@@ -308,16 +326,18 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Vague authority/inference narration `RW-W-218/RW-W-220` | Unlocatable attribution or stacked “we can see/this shows” narration | “Research shows”, “We can see…this shows…” | Add a real source and inference conditions, or narrow the claim |
 | Translationese/symmetric stacking `RW-W-219/RW-W-221` | Source-language syntax or repeated balanced clauses replacing information choices | literal “conduct an analysis” structures; repeated “both…and…” | Rebuild target-language syntax and organize by fact, judgment, and action |
 | Heading-final period `RW-W-222` | A Markdown heading is emitted as a full sentence with a terminal period | `# Implementation plan.` | Remove the terminal period; keep functional question marks, exclamation marks, and version numbers |
+| Heading/self-certification semantics `RW-W-223—RW-W-227` | Editorial judgments in titles, self-certifying claims, certainty intensifiers, inference narration, and paragraph-level stacks | “The real problem”, “this clearly proves”, “we can conclude” | State the object, evidence, conditions, and bounded conclusion; preserve necessary definitional, statistical, comparative, or normative uses |
+| Ornamental rules/fragment bullets `RW-W-228/RW-W-229` | Separator rules and three or more short label-like dash items fragment formal prose | `---`, repeated `- Deep impact` | Use continuous prose or real heading hierarchy; retain functional clauses, procedures, and parameter lists |
 
 Coverage includes `zh-CN` and general professional English across papers, grants, public articles, technical commentary, policy, official documents, reports, memos, marketing, and bilingual writing. Findings are review signals, not a “human score” or detector-evasion promise.
 
 ### Four reproducible cases
 
-Four synthetic cases show the draft, revision, and verification result. Strict preflight moved from **14 hard failures / 23 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). A long-document regression also processes 324,015 characters in 55 chunks, maps an intentional model self-description to line 9,001, and checks number and duplicate-paragraph indexes. [Read the test code](tests/test_lint.py).
+Four synthetic cases show the draft, revision, and verification result. Under the 1.0.0 rules, strict preflight moved from **14 hard failures / 24 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). A long-document regression also processes 324,015 characters in 55 chunks, maps an intentional model self-description to line 9,001, and checks number and duplicate-paragraph indexes. [Read the test code](tests/test_lint.py).
 
 | Case | Draft | Revision | Main improvement | Preflight |
 | --- | --- | --- | --- | --- |
-| Academic abstract | [View](examples/simulation/inputs/academic-abstract.zh.md) | [View](examples/simulation/outputs/academic-abstract.zh.md) | removes model identity and reasoning leakage | 5 fail / 4 warn → 0 / 0 |
+| Academic abstract | [View](examples/simulation/inputs/academic-abstract.zh.md) | [View](examples/simulation/outputs/academic-abstract.zh.md) | removes model identity, reasoning leakage, and self-certifying claims | 5 fail / 5 warn → 0 / 0 |
 | Grant rationale | [View](examples/simulation/inputs/grant-rationale.zh.md) | [View](examples/simulation/outputs/grant-rationale.zh.md) | removes promotional language and TODOs | 3 fail / 6 warn → 0 / 0 |
 | Policy brief | [View](examples/simulation/inputs/policy-brief.zh.md) | [View](examples/simulation/outputs/policy-brief.zh.md) | clarifies options and evidence gaps | 2 fail / 8 warn → 0 / 0 |
 | Executive memo | [View](examples/simulation/inputs/executive-memo.en.md) | [View](examples/simulation/outputs/executive-memo.en.md) | puts decision, constraints, and risks first | 4 fail / 5 warn → 0 / 0 |
@@ -370,7 +390,8 @@ Few-shots are not a growing template dump. A task may select up to three example
 ```bash
 python3 scripts/reviewwrite_lint.py path/to/draft.md
 python3 scripts/reviewwrite_lint.py path/to/draft.md --strict
-python3 scripts/reviewwrite_gate.py path/to/structured-response.txt
+python3 scripts/reviewwrite_semantic.py init path/to/structured-response.txt --output semantic-review.json
+python3 scripts/reviewwrite_gate.py path/to/structured-response.txt --semantic-review semantic-review.json
 python3 scripts/validate_skill.py
 python3 -m unittest discover -s tests -v
 python3 scripts/package_skill.py

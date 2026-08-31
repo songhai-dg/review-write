@@ -8,13 +8,13 @@ metadata:
   reviewwrite:
     skill_id: reviewwrite
     display_name: "审写 · ReviewWrite"
+    version: "1.0.0"
+    platforms: [linux, macos, windows]
     natural_language_aliases: ["审写", "ReviewWrite"]
     alias_boundary: "Natural-language triggers only; slash invocation uses reviewwrite."
     languages: [zh-CN, en]
     maintainer: "中财数碳（北京）科技有限公司与中央财经大学人工智能与数字财经研究中心（CUFE/AIDF）"
-version: 0.9.0
 license: MIT
-platforms: [linux, macos, windows]
 ---
 
 # 审写 · ReviewWrite
@@ -40,7 +40,7 @@ platforms: [linux, macos, windows]
 
 宿主智能体先运行风险路由，再决定是否接入 ReviewWrite：正式论文、报告、公文、政策、营销和超长文档为高风险，必须接入；普通正文任务为中风险，建议接入；事实问答、命令和格式操作不必接入。被接入后，最终门禁必须执行。可执行路由、交接字段、状态和有限回改协议见 [references/agent-handoff.md](references/agent-handoff.md)。
 
-最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Final gate → Repair（最多两轮）→ Deliver`。路由只决定是否接入，不代表已经执行终检；交付前必须运行 `scripts/reviewwrite_gate.py`。用户只要正文时，门禁通过后向用户返回不带标签的正文；交接信息、标签和评审过程保持内部可用。用户要求评审时，再按四个 surface 输出。
+最小闭环是：`Detect → Preflight → Draft → Extract deliverable_body → Semantic review → Final gate → Repair（最多两轮）→ Deliver`。路由只决定是否接入，不代表已经执行终检；交付前必须完成与正文哈希绑定的五项语义复核，并运行 `scripts/reviewwrite_gate.py`。用户只要正文时，门禁通过后向用户返回不带标签的正文；交接信息、标签、复核记录和评审过程保持内部可用。用户要求评审时，再按四个 surface 输出。
 
 ## 设计原则：固定边界，动态判断
 
@@ -106,6 +106,7 @@ platforms: [linux, macos, windows]
 - 语言、地区和文化语境：[references/language-packs/README.md](references/language-packs/README.md)，再读取一个匹配的语言包；
 - few-shot 选择规则：[references/few-shot-policy.md](references/few-shot-policy.md)
 - 中文自然表达信号：[references/style-signals.md](references/style-signals.md)
+- 标题、内部过程、自证式口气和主张边界的交付语义控制：[references/delivery-semantics.md](references/delivery-semantics.md)；所有正式成稿在终检前读取；
 - 跨语言专业翻译、术语保持和双语复核：[references/translation-qa.md](references/translation-qa.md)；当任务涉及翻译、双语改写或跨语言体裁迁移时读取；
 - 超长文档分块预检、全局索引和一致性线索：[references/long-document-review.md](references/long-document-review.md)；当正文达到约十万字、需要章节级审查或超出单次上下文时读取；
 - 平台安装和调用差异：[references/platforms.md](references/platforms.md)
@@ -173,11 +174,13 @@ platforms: [linux, macos, windows]
 
 详细模式见 [references/leakage.md](references/leakage.md)。可运行：
 
-```bash
-python3 scripts/reviewwrite_gate.py <response-path>
-```
+1.0.0 起，先运行 `reviewwrite_semantic.py init` 生成与正文 SHA-256 绑定的复核记录，逐项完成标题与结构读者化、内部过程分离、自证删除、主张—证据边界和事实限定保持检查，再将该记录传给最终门禁。门禁严格解析唯一的 `deliverable_body`，只对抽取后的正文运行严格 linter，并验证语义记录；通过时只向标准输出写入不带标签的正文，失败时不输出正文。评审报告可以引用原文中的问题句，不能因为评审证据触发正文泄漏失败；但这不豁免正文自身的泄漏。若输入本来就是纯正文，必须显式使用 `--input-mode raw`，避免把混合响应误当成正文。
 
-该命令严格解析唯一的 `deliverable_body`，只对抽取后的正文运行严格 linter；通过时只向标准输出写入不带标签的正文，失败时不输出正文。评审报告可以引用原文中的问题句，不能因为评审证据触发正文泄漏失败；但这不豁免正文自身的泄漏。若输入本来就是纯正文，必须显式使用 `--input-mode raw`，避免把混合响应误当成正文。
+```bash
+python3 scripts/reviewwrite_semantic.py init response.txt --output semantic-review.json
+python3 scripts/reviewwrite_semantic.py check response.txt semantic-review.json
+python3 scripts/reviewwrite_gate.py response.txt --semantic-review semantic-review.json
+```
 
 当正文本身以某种被授权的语境为讨论对象时（AI 安全与提示注入研究、提示模板与软件文档、AI 辅助披露声明、对话转写、编辑审计报告），相关术语可能是主题而非泄漏。此时用 `--context` 声明语境，linter 会把对应硬失败降级为警告，保留人工确认信号而不是无差别拦截；用 `--genre` 声明体裁时，会放宽该体裁中功能性的格式警告（如公文、政策条文的结构化条目）。
 
@@ -214,6 +217,10 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 - 技术数字、因果判断和行业预测是否有口径、对象、来源、适用范围和限制条件；
 - 公众号或技术评论是否在多个句段重复使用“第一、第二、第三/首先、其次、最后”，导致段落功能和语气没有变化；正式条文、方法步骤和清单结构可保留；
 - Markdown 标题是否被模型误写成带句号的完整句子；问号、感叹号和版本号等有功能的标题标点不机械删除；
+- Markdown、Setext 或文首短标题是否使用“这才是、真正、完全、不是……而是……”等内部判断替代读者可识别的对象、事件或问题；
+- 事实后是否追加“充分证明、无疑、显然、完全正确”等自我认证，却没有增加证据、条件或适用范围；
+- 是否用“为了满足要求、本文需要先、因此我们可以得出结论”等任务服从或推理过程代替最终内容；
+- 是否残留仅用于制造版面节奏的横线、连续短横杠碎片或粗体标签，而没有真实的标题、条款或清单功能；
 - 作者声音是否被通用模型口吻覆盖；
 - 正式正文是否混入内部过程。
 
@@ -249,6 +256,8 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 - 对“最硬、最关键、最核心、最值得注意、真正重要、绝对”等极端化词语，先核对比较范围、判断标准和证据；缺少支撑时改为具体判断，或降低为“一个影响因素”“主要问题之一”等符合事实的表述。
 - 对“换句话说”“答案很可能不是”“这也是最危险的地方”等转折语，只有其后确有新的释义、风险判断或证据时保留；否则直接写判断、因果或条件。
 - 把“过程说明”转化为真实内容，或从正文删除并放入评审报告。
+- 不把“真正、完全、不是……而是……”机械设为禁词；有定义、比较、统计或规范功能时保留，没有新增信息时改成事实、条件或有限结论。
+- 正式成稿优先使用连续正文和真实标题层级；只有法规条款、操作步骤、参数清单等确有结构功能时保留列表。
 - 允许学术方法部分使用合理被动语态，允许政策和法律文本保留规范化重复；不要执行跨体裁的绝对禁词规则。
 - 中文保持符合体裁的自然表达；英文保持作者原有变体和领域习惯。
 
@@ -259,7 +268,7 @@ python3 scripts/reviewwrite_lint.py --list-profiles
 1. 语义复核：逐项检查事实、数字、引用、专名、限定条件、义务和不确定性；
 2. 交付复核：运行泄漏预检，检查体裁、正文边界、机械表达和聊天式结尾；若此次包含 DOCX/PPTX 交付，再完成相应 Office QA 的结构审计和渲染门禁。
 
-最终输出前必须执行 `python3 scripts/reviewwrite_gate.py <response-path>`。门禁负责结构化抽取、正文严格预检和“失败时不输出正文”；纯正文文件才使用 `--input-mode raw`。除了提示、推理和工具泄漏，还要检查“证据边界、保留约束、验收标准、交付正文、最终门禁、回改轮次”等只供内部使用的契约术语，以及“值得注意的是、总的来说、研究表明、我们可以看到……这说明……”等容易用组织话术代替信息或来源的组合信号。一般任务中内部契约术语一旦进入正文就是阻断项；只有法律分析、研究方法、软件文档、AI 安全或编辑审计确实以该术语为讨论对象时，才显式声明授权语境。任何 `fail` 或严格模式下的 `warn` 都必须回到修改阶段；不能只凭模型自评“已经自然”，也不能只审评审报告而跳过正式正文。
+最终输出前必须完成 [交付语义控制](references/delivery-semantics.md) 的五项复核，并执行 `python3 scripts/reviewwrite_gate.py <response-path> --semantic-review <review.json>`。门禁负责结构化抽取、正文严格预检、正文哈希校验和“失败时不输出正文”；纯正文文件才使用 `--input-mode raw`。除了提示、推理和工具泄漏，还要检查内部契约术语、标题中的编辑判断、任务服从、自证式结论、强化词堆叠和推理旁白。任何 `fail`、严格模式下的 `warn`、缺失或失效的语义复核记录，都必须回到修改阶段；不能只凭模型自评“已经自然”，也不能只审评审报告而跳过正式正文。
 
 发现漂移时恢复原文或降低修改幅度。存在 blocker 时不得声称完成。
 
@@ -290,7 +299,7 @@ preserve、repair、optional 和 acceptance。
 
 `deliverable_body` 的末尾禁止“如果你需要”“我也可以继续”“希望这有帮助”等交接语。任何后续帮助只能由技能外层对话单独发送，不能进入结构化响应。
 
-如果本地可执行 Python：运行 `reviewwrite_gate.py`；未通过时根据诊断回到改写步骤并重新验证。修复回路应有限，仍失败就报告触发句和失败状态，不得输出未通过正文或声称通过。警告是模型判断的线索，不是跨体裁的自动删改指令。
+如果本地可执行 Python：先创建并完成语义复核记录，再运行 `reviewwrite_gate.py --semantic-review`；未通过时根据诊断回到改写步骤，正文变化后重新生成复核记录。修复回路应有限，仍失败就报告触发句和失败状态，不得输出未通过正文或声称通过。警告是模型判断的线索，不是跨体裁的自动删改指令。
 
 用户只要求正文时，结构化标签仅用于内部抽取；门禁通过后只向用户输出标签内的正文，不显示 `<deliverable_body>` 标签。仍须在内部完成评审和验证。不得输出隐藏推理，只提供简洁、可核验的修改依据。
 

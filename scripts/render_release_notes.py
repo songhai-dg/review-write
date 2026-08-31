@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def current_version() -> str:
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-    match = re.search(r"(?m)^version: ([^\n]+)$", skill)
+    match = re.search(r'(?m)^    version: "([^"]+)"$', skill)
     if not match:
-        raise ValueError("SKILL.md 缺少 version")
+        raise ValueError("SKILL.md metadata.reviewwrite 缺少 version")
     return match.group(1)
 
 
@@ -59,7 +59,7 @@ def render(version: str | None = None) -> str:
 
 ## 已知边界
 
-- 预检只定位确定性泄漏与风格信号，不能替代事实、引用、法律或学术专业复核。
+- 确定性预检只定位可稳定识别的泄漏与风格信号；1.0.0 要求另行完成与正文哈希绑定的五项语义复核，但仍不能替代事实、引用、法律或学术专业复核。
 - `--context`/`--genre` 只对声明的合法语境放宽相应信号；降级为 warning 后仍须人工确认。
 """
 

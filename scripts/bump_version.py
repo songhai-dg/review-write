@@ -31,7 +31,7 @@ def current_versions() -> dict[str, str]:
     package = (ROOT / "scripts" / "package_skill.py").read_text(encoding="utf-8")
     updater = (ROOT / "scripts" / "reviewwrite_update.py").read_text(encoding="utf-8")
     return {
-        "SKILL.md": re.search(r"(?m)^version: ([^\n]+)$", skill).group(1),
+        "SKILL.md": re.search(r'(?m)^    version: "([^"]+)"$', skill).group(1),
         "package_skill.py": re.search(r'(?m)^VERSION = "([^"]+)"$', package).group(1),
         "reviewwrite_update.py": re.search(r'ReviewWrite-Updater/([0-9.]+)', updater).group(1),
         "compatibility.json": json.loads(
@@ -64,7 +64,7 @@ def replace_once(path: Path, old: str, new: str) -> None:
 
 def apply(current: Version, target: Version) -> None:
     old, new = str(current), str(target)
-    replace_once(ROOT / "SKILL.md", f"version: {old}", f"version: {new}")
+    replace_once(ROOT / "SKILL.md", f'    version: "{old}"', f'    version: "{new}"')
     replace_once(
         ROOT / "scripts" / "package_skill.py",
         f'VERSION = "{old}"',

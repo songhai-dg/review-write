@@ -48,8 +48,10 @@ class ReviewWriteLintTests(unittest.TestCase):
         bundle_paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
         self.assertIn("references/agent-handoff.md", bundle_paths)
         host_prompt = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("$reviewwrite", host_prompt)
         self.assertIn("交付前", host_prompt)
         self.assertIn("最多回改两轮", host_prompt)
+        self.assertIn("--semantic-review", host_prompt)
 
     def test_long_document_review_preserves_global_locations(self) -> None:
         paragraph = "普通正文。这里保留上下文和限定条件，不能只看局部，审核结论还需要回到原始证据和适用范围。"
@@ -318,6 +320,67 @@ class ReviewWriteLintTests(unittest.TestCase):
             {item.rule_id for item in reviewwrite_lint.lint_text(text)},
         )
 
+    def test_v1_heading_semantics_cover_markdown_setext_and_plain_titles(self) -> None:
+        texts = (
+            "# 这才是真正的问题\n正文。",
+            "不是速度，而是认知\n================\n正文。",
+            "真正的答案。\n\n正文。",
+        )
+        for text in texts:
+            with self.subTest(text=text):
+                self.assertIn(
+                    "RW-W-223",
+                    {item.rule_id for item in reviewwrite_lint.lint_text(text)},
+                )
+
+    def test_v1_heading_semantics_preserve_reader_facing_titles(self) -> None:
+        text = "# 项目实施进度\n\n2026年完成第一阶段验收。"
+        self.assertNotIn(
+            "RW-W-223",
+            {item.rule_id for item in reviewwrite_lint.lint_text(text)},
+        )
+
+    def test_v1_latent_instruction_process_is_hard_failure(self) -> None:
+        text = "为了满足用户的要求，本文将先概述背景，再给出结论。"
+        findings = reviewwrite_lint.lint_text(text)
+        self.assertIn("RW-F-007", {item.rule_id for item in findings})
+        self.assertEqual(reviewwrite_lint.exit_code_for(findings), 1)
+
+    def test_v1_self_certification_and_certainty_are_reviewed(self) -> None:
+        text = "事实已经充分证明，该政策完全正确。这充分说明项目已经成功。"
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue({"RW-W-224", "RW-W-225", "RW-W-227"} <= rule_ids)
+
+    def test_v1_single_inference_process_is_reviewed(self) -> None:
+        findings = reviewwrite_lint.lint_text(
+            "数据增长了，因此我们可以得出结论：项目已经成功。"
+        )
+        self.assertIn("RW-W-226", {item.rule_id for item in findings})
+
+    def test_v1_does_not_ban_technical_or_bounded_language(self) -> None:
+        clean = (
+            "研究采用完全随机设计。"
+            "统计检验显示，两组差异在5%水平上显著。"
+            "成本不是唯一约束，交付周期也会影响方案选择。"
+        )
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(clean)}
+        self.assertFalse({"RW-W-224", "RW-W-225", "RW-W-226", "RW-W-227"} & rule_ids)
+
+    def test_v1_ornamental_rules_and_fragment_bullets_are_reviewed(self) -> None:
+        text = "项目进展\n\n---\n\n- 高效协同\n- 深度赋能\n- 全面提升\n"
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue({"RW-W-228", "RW-W-229"} <= rule_ids)
+
+    def test_v1_numbered_formal_clauses_are_not_treated_as_fragment_bullets(self) -> None:
+        text = "一、申报条件\n（一）申请人应当提交身份证明。\n（二）材料不齐全的，应在五个工作日内补正。"
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertFalse({"RW-W-228", "RW-W-229"} & rule_ids)
+
+    def test_v1_structure_checks_support_crlf(self) -> None:
+        text = "这才是真正的问题。\r\n\r\n---\r\n\r\n正文。"
+        rule_ids = {item.rule_id for item in reviewwrite_lint.lint_text(text)}
+        self.assertTrue({"RW-W-223", "RW-W-228"} <= rule_ids)
+
     def test_technical_commentary_detects_stacked_signals(self) -> None:
         draft = (
             "这是一个 34.66B 参数的稀疏 MoE 模型，每个 token 激活约 3B 参数。"
@@ -561,6 +624,7 @@ class ReviewWriteLintTests(unittest.TestCase):
             self.assertNotIn("skills/reviewwrite/SKILL.md", names)
             self.assertIn("scripts/reviewwrite_lint.py", names)
             self.assertIn("scripts/reviewwrite_gate.py", names)
+            self.assertIn("scripts/reviewwrite_semantic.py", names)
             self.assertIn("scripts/runtime_io.py", names)
             self.assertIn("scripts/office_qa.py", names)
             self.assertIn("references/leakage.md", names)

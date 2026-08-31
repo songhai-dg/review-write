@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Sequence
 
 import reviewwrite_lint
+import reviewwrite_semantic
 from runtime_io import configure_utf8_stdio
 
 
@@ -20,6 +21,7 @@ def gate_response(
     input_mode: str = "structured",
     profiles: Sequence[str] = (),
     confirm_context_warnings: bool = False,
+    semantic_review: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Return a body only when extraction and strict linting both pass."""
     if input_mode not in {"structured", "raw"}:
@@ -61,6 +63,24 @@ def gate_response(
             "body": None,
             "findings": [asdict(item) for item in blocking_findings],
             "message": "正文未通过严格终检",
+        }
+    if semantic_review is None:
+        return {
+            "status": "blocked",
+            "stage": "semantic-review",
+            "body": None,
+            "findings": [],
+            "message": "缺少与当前正文绑定的语义复核记录",
+        }
+    semantic_errors = reviewwrite_semantic.validate_review(body, semantic_review)
+    if semantic_errors:
+        return {
+            "status": "blocked",
+            "stage": "semantic-review",
+            "body": None,
+            "findings": [],
+            "semantic_errors": semantic_errors,
+            "message": "正文未通过语义复核记录校验",
         }
     return {
         "status": "passed",
@@ -109,19 +129,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="显式确认已声明语境中的降级警告；不放行普通警告或硬失败",
     )
     parser.add_argument("--format", choices=("body", "json"), default="body")
+    parser.add_argument(
+        "--semantic-review",
+        type=Path,
+        required=True,
+        help="与当前正文 SHA-256 绑定且五项检查均已完成的 JSON 复核记录",
+    )
     args = parser.parse_args(argv)
     profiles = ([args.genre] if args.genre else []) + list(args.context)
     if args.confirm_context_warnings and not args.context:
         parser.error("--confirm-context-warnings 必须与至少一个 --context 同时使用")
     try:
         source_text, source = _read(args.path)
+        semantic_review = json.loads(args.semantic_review.read_text(encoding="utf-8"))
         result = gate_response(
             source_text,
             input_mode=args.input_mode,
             profiles=profiles,
             confirm_context_warnings=args.confirm_context_warnings,
+            semantic_review=semantic_review,
         )
-    except (RuntimeError, ValueError) as exc:
+    except (RuntimeError, ValueError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
 

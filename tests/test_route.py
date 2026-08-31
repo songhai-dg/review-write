@@ -46,6 +46,7 @@ class ReviewWriteRouteTests(unittest.TestCase):
         paths = {path.relative_to(ROOT).as_posix() for path in package_skill.bundle_files()}
         self.assertIn("scripts/reviewwrite_route.py", paths)
         self.assertIn("scripts/reviewwrite_gate.py", paths)
+        self.assertIn("scripts/reviewwrite_semantic.py", paths)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # 智能体交接协议
 
-ReviewWrite 不是只能被用户手动点名的末端工具，但也不应拦截所有对话。宿主先用风险路由选择接入级别，再把 ReviewWrite 作为生成前后的质量控制层。
+ReviewWrite 不是只能被用户手动点名的末端工具，但也不应拦截所有对话。宿主先用风险路由选择接入级别，再把 ReviewWrite 作为生成前后的质量控制层。1.0.0 起，确定性预检与语义复核同时完成才允许交付。
 
 ## 可执行风险路由
 
@@ -57,17 +57,18 @@ review_stage: preflight | final_gate
 ## 推荐闭环
 
 ```text
-Detect → Preflight → Draft → Extract → Final gate → Repair (max 2) → Deliver
-识别任务   写前约束    生成       抽正文       严格终检       有限回改          交付
+Detect → Preflight → Draft → Extract → Semantic review → Final gate → Repair (max 2) → Deliver
+识别任务   写前约束    生成       抽正文       五项语义复核          严格终检       有限回改          交付
 ```
 
 1. `Detect`：宿主判断是否属于写作交付任务，并选择语言、体裁和读者。
 2. `Preflight`：ReviewWrite 输出 preserve、repair、evidence_boundary 和 acceptance；没有足够信息时缩小修改范围。
 3. `Draft`：宿主依据契约生成文本，不能把评审报告、计划或工具过程写进正文。
 4. `Extract`：从结构化响应中抽取唯一的 `deliverable_body`；只要正文，不向用户展示标签和内部交接信息。
-5. `Final gate`：运行 `python3 scripts/reviewwrite_gate.py <response-path>`。它负责严格抽取与预检；通过时只输出正文，失败时不输出正文。纯正文输入必须显式添加 `--input-mode raw`。
-6. `Repair`：出现 `fail` 或严格模式下的 `warn` 时，只针对触发句回改，最多两轮；不得用删掉事实或降低信息密度来换取通过。
-7. `Deliver`：通过后按用户要求返回正文；用户要求评审时才返回四个 surface。
+5. `Semantic review`：检查标题是否面向读者、内部过程是否抽离、自证式口气是否删除、主张是否受证据约束、事实与限定是否保持；记录与正文 SHA-256 绑定。
+6. `Final gate`：运行 `python3 scripts/reviewwrite_gate.py <response-path> --semantic-review <review.json>`。它负责严格抽取、确定性预检和复核记录校验；通过时只输出正文，失败时不输出正文。纯正文输入必须显式添加 `--input-mode raw`。
+7. `Repair`：出现 `fail`、严格模式下的 `warn` 或复核记录失效时，只针对触发句回改，最多两轮；正文改变后必须重新复核，不得用删掉事实或降低信息密度来换取通过。
+8. `Deliver`：通过后按用户要求返回正文；用户要求评审时才返回四个 surface。
 
 ## 状态交接
 
@@ -92,10 +93,13 @@ Detect → Preflight → Draft → Extract → Final gate → Repair (max 2) →
 
 ```bash
 # 结构化响应：默认且推荐
-python3 scripts/reviewwrite_gate.py response.txt
+python3 scripts/reviewwrite_semantic.py init response.txt --output semantic-review.json
+# 逐项完成复核后：
+python3 scripts/reviewwrite_gate.py response.txt --semantic-review semantic-review.json
 
 # 已确认文件只包含正文时
-python3 scripts/reviewwrite_gate.py body.txt --input-mode raw
+python3 scripts/reviewwrite_semantic.py init body.txt --input-mode raw --output semantic-review.json
+python3 scripts/reviewwrite_gate.py body.txt --input-mode raw --semantic-review semantic-review.json
 ```
 
 宿主只能使用命令成功后的标准输出作为最终正文。退出码非零时，标准输出为空；诊断写入标准错误，供定向回改使用。路由 JSON、模型自评或“已审核”字样都不能替代这一步。

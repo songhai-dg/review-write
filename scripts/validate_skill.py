@@ -29,6 +29,7 @@ REQUIRED_FILES = (
     "references/leakage.md",
     "references/few-shot-policy.md",
     "references/style-signals.md",
+    "references/delivery-semantics.md",
     "references/language-packs/README.md",
     "references/language-packs/zh-CN.md",
     "references/language-packs/en.md",
@@ -51,6 +52,7 @@ REQUIRED_FILES = (
     "examples/simulation/RUN_REPORT.md",
     "scripts/reviewwrite_lint.py",
     "scripts/reviewwrite_gate.py",
+    "scripts/reviewwrite_semantic.py",
     "scripts/runtime_io.py",
     "scripts/reviewwrite_update.py",
     "scripts/print_install_prompt.py",
@@ -197,7 +199,7 @@ def validate() -> list[str]:
         compatibility = json.loads((ROOT / "compatibility.json").read_text(encoding="utf-8"))
         release_policy = json.loads((ROOT / "release-policy.json").read_text(encoding="utf-8"))
         skill_version = re.search(
-            r"(?m)^version: ([^\n]+)$",
+            r'(?m)^    version: "([^"]+)"$',
             (ROOT / "SKILL.md").read_text(encoding="utf-8"),
         ).group(1)
         versions = {
@@ -229,6 +231,13 @@ def validate() -> list[str]:
             errors.append("Office QA 格式声明必须为 docx 与 pptx")
         if compatibility.get("skill_id") != "reviewwrite":
             errors.append("技术 Skill ID 必须为 reviewwrite")
+        delivery_gate = compatibility.get("delivery_gate", {})
+        if delivery_gate.get("protocol") != "deterministic-lint-plus-body-bound-semantic-review":
+            errors.append("1.0 交付门禁必须声明确定性预检与正文绑定语义复核")
+        if delivery_gate.get("body_binding") != "sha256":
+            errors.append("语义复核必须与正文 SHA-256 绑定")
+        if delivery_gate.get("missing_or_stale_review") != "blocked":
+            errors.append("缺失或失效的语义复核必须阻断交付")
         update_policy = release_policy.get("update", {})
         if update_policy.get("default_policy") != "notify":
             errors.append("默认更新策略必须为 notify")
@@ -238,6 +247,12 @@ def validate() -> list[str]:
             errors.append("更新检查不得使用随机策略")
         if "after-active-task" not in str(update_policy.get("check_trigger", "")):
             errors.append("过期缓存必须在活跃任务结束后刷新")
+        release_gates = set(release_policy.get("release_gates", []))
+        if not {
+            "body-bound-semantic-review-regression",
+            "title-and-structure-semantics-regression",
+        } <= release_gates:
+            errors.append("1.0 发布门缺少交付语义回归")
         if set(compatibility.get("natural_language_aliases", [])) != {"审写", "ReviewWrite"}:
             errors.append("自然语言简称必须为 审写 与 ReviewWrite")
         manifest = json.loads(
@@ -261,6 +276,7 @@ def validate() -> list[str]:
     for script_name in (
         "scripts/reviewwrite_lint.py",
         "scripts/reviewwrite_gate.py",
+        "scripts/reviewwrite_semantic.py",
         "scripts/runtime_io.py",
         "scripts/validate_skill.py",
         "scripts/package_skill.py",
@@ -272,6 +288,7 @@ def validate() -> list[str]:
         "scripts/office_qa.py",
         "scripts/long_document_review.py",
         "scripts/reviewwrite_route.py",
+        "scripts/reviewwrite_provenance.py",
         "scripts/build_distribution_kit.py",
     ):
         script_path = ROOT / script_name

@@ -1,10 +1,10 @@
 # ReviewWrite 端到端模拟报告
 
-执行日期：2026-08-11
+执行日期：2026-08-30
 
-Skill 版本：0.8.5
+Skill 版本：1.0.0
 
-执行方式：按 ReviewWrite Skill 完成 `Review → Plan → Rewrite → Verify`，使用 `reviewwrite_lint.py --strict` 做确定性泄漏预检，并用 `reviewwrite_gate.py` 验证结构化正文抽取与失败阻断。
+执行方式：按 ReviewWrite Skill 完成 `Review → Plan → Rewrite → Verify`，使用 `reviewwrite_lint.py --strict` 做确定性泄漏预检，使用 `reviewwrite_semantic.py` 建立与正文 SHA-256 绑定的五项复核记录，并用 `reviewwrite_gate.py --semantic-review` 验证结构化正文抽取、规则门禁、复核记录和失败阻断。
 
 这些文本都是项目原创的合成测试样本，只用于验证过程泄漏、体裁校准和事实保持，不用于判断作者身份，也不代表真实研究、项目、政策或经营数据。
 
@@ -12,21 +12,23 @@ Skill 版本：0.8.5
 
 | 样本 | 体裁 | 修改前 | 修改后 | 保护项 |
 | --- | --- | ---: | ---: | --- |
-| 中文学术摘要 | academic-paper | 5 fail / 4 warn | 0 fail / 0 warn | 10 项全部保留 |
+| 中文学术摘要 | academic-paper | 5 fail / 5 warn | 0 fail / 0 warn | 10 项全部保留 |
 | 中文基金申请 | grant-proposal | 3 fail / 6 warn | 0 fail / 0 warn | 8 项全部保留 |
 | 中文政策简报 | policy-brief | 2 fail / 8 warn | 0 fail / 0 warn | 10 项全部保留 |
 | 英文管理备忘录 | executive-memo | 4 fail / 5 warn | 0 fail / 0 warn | 10 项全部保留 |
-| **合计** | 4 类 | **14 fail / 23 warn** | **0 fail / 0 warn** | **38 项逐字保留** |
+| **合计** | 4 类 | **14 fail / 24 warn** | **0 fail / 0 warn** | **38 项逐字保留** |
 
 检测器只负责定位提示、推理、工具、编辑和聊天残留等确定性信号。修改稿能否成立，还必须经过主张—证据、体裁和限定条件复核。
 
-## 0.8.3—0.8.4 新增对抗回归
+## 1.0.0 对抗回归与双层门禁
 
 新增综合样本 `tests/fixtures/ai_trace_stack.zh.md`，覆盖用户反馈中容易漏检的表达。样本稳定触发 8 个警告：极端重要性、元叙事包装、话语填充、重复总结、无来源背书、翻译腔、推论旁白堆叠和对称句式堆叠。另有反例确认：带可定位年份引用的“研究表明”不触发模糊权威规则；单个有功能的“既要……也要……”不因词语本身被拦截。
 
-标题回归补充确认：`# 项目实施方案。` 及带闭引号的句号标题触发 `RW-W-222`，普通正文中的句号、问号标题、感叹号标题和 `Version 0.8.5` 不触发。
+标题回归确认：`# 项目实施方案。` 及带闭引号的句号标题触发 `RW-W-222`；Markdown、Setext 和文首短标题中的编辑判断触发 `RW-W-223`；普通正文中的句号、问号标题、感叹号标题和 `Version 1.0.0` 不触发句号规则。
 
-交付门禁回归覆盖六种状态：干净的结构化响应只输出标签内正文；内部契约术语和风格警告会阻断；标签外文本会阻断；纯正文只有显式声明 `--input-mode raw` 才会进入终检；授权语境警告默认阻断；显式确认后只放行带语境降级标记的发现，普通警告仍阻断。该测试验证执行边界，不等于事实、引用或专业结论已经被外部核实。
+1.0.0 新增 `RW-F-007` 与 `RW-W-223—RW-W-229`，覆盖隐性任务服从、自证式结论、确定性强化、单次推理旁白、段落级修辞堆叠、装饰横线和连续短横杠碎片。反例回归保留完全随机设计、统计显著、有限比较、正式编号条款和功能性清单，不把强词或列表本身设为禁用项。
+
+交付门禁回归覆盖规则与语义两层：干净的结构化响应仍需有效的五项复核记录；缺少记录、存在 pending 项或正文哈希变化都会阻断；内部契约术语和风格警告会阻断；标签外文本会阻断；纯正文只有显式声明 `--input-mode raw` 才会进入终检；授权语境警告默认阻断；显式确认后只放行带语境降级标记的发现，普通警告仍阻断。该测试验证执行边界，不等于事实、引用或专业结论已经被外部核实。
 
 ## 长文档回归
 
@@ -140,7 +142,8 @@ Skill 版本：0.8.5
 ```bash
 python3 scripts/reviewwrite_lint.py examples/simulation/inputs/academic-abstract.zh.md --strict
 python3 scripts/reviewwrite_lint.py examples/simulation/outputs/academic-abstract.zh.md --strict
-python3 scripts/reviewwrite_gate.py path/to/structured-response.txt
+python3 scripts/reviewwrite_semantic.py init path/to/structured-response.txt --output semantic-review.json
+python3 scripts/reviewwrite_gate.py path/to/structured-response.txt --semantic-review semantic-review.json
 python3 -m unittest tests.test_lint.ReviewWriteLintTests.test_long_document_review_preserves_global_locations -v
 python3 -m unittest discover -s tests -v
 ```

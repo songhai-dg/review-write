@@ -181,6 +181,19 @@ RULES: tuple[Rule, ...] = (
         r"evidence\s+boundary|preserve\s+constraints?|acceptance\s+criteria)",
     ),
     Rule(
+        "RW-F-007",
+        "fail",
+        "latent-instruction-process-leakage",
+        "正文疑似把任务服从、写作要求或生成步骤写给读者；请直接交付内容，不要叙述如何满足指令。",
+        r"(?:(?:为了|为)(?:满足|响应|遵循)(?:用户|客户|任务|上述|相关)?(?:的)?(?:要求|需求|指令)|"
+        r"(?:根据|按照|依照)(?:本次|当前|上述|相关|任务)(?:的)?(?:要求|指令)[，,]?[^。！？\n]{0,24}"
+        r"(?:本文|本稿|下文|接下来|先|将)|"
+        r"(?:本段|本节|本文)(?:需要|应当|必须)(?:先|重点)?[^。！？\n]{0,24}"
+        r"(?:保持|采用|使用)(?:正式|专业|简洁|自然|学术)(?:语气|文风|表达)|"
+        r"to\s+(?:satisfy|follow|comply\s+with)(?:\s+the)?(?:\s+user)?(?:'s)?\s+"
+        r"(?:request|requirements?|instructions?))",
+    ),
+    Rule(
         "RW-W-101",
         "warn",
         "process-narration",
@@ -329,6 +342,47 @@ RULES: tuple[Rule, ...] = (
         r"^[ \t]{0,3}#{1,6}[ \t]+[^\n#]+[。．｡\.]"
         r"(?:[”’\"'）》」』】])?[ \t]*(?:#+[ \t]*)?$",
     ),
+    Rule(
+        "RW-W-224",
+        "warn",
+        "self-certifying-claim",
+        "句子可能用确定性宣告替代事实或依据；请直接写事实、适用范围和可支持的结论。",
+        r"(?:(?:事实|结果|实践|经验)(?:已经|已|再次)?(?:充分|清楚|明确|有力)?"
+        r"(?:证明|说明|表明|印证)|"
+        r"这(?:一事实|一结果|些事实|些结果)?(?:已经|已|再次)?(?:充分|清楚|明确|有力|无疑)?"
+        r"(?:证明|说明|表明|印证)|"
+        r"(?:毫无疑问|无可置疑|显而易见|不难看出|显然可见|足以证明|再次印证)(?:[，,:：])?|"
+        r"this\s+(?:clearly|plainly|undoubtedly|conclusively)\s+"
+        r"(?:shows|demonstrates|proves|confirms)|there\s+is\s+no\s+doubt(?:\s+that)?)",
+    ),
+    Rule(
+        "RW-W-225",
+        "warn",
+        "certainty-intensifier",
+        "强化词与笼统结论相邻；请核对可验证标准、对象、范围和依据。",
+        r"(?:(?:真正|完全|彻底|绝对|显然|无疑)(?:地)?"
+        r"(?:改变|解决|证明|说明|表明|实现|消除|成功|正确|有效|可靠|可行|成熟|领先)|"
+        r"(?:完全|绝对|无疑)(?:正确|成功|有效|可靠|可行|成熟|领先)|"
+        r"(?:truly|completely|absolutely|clearly|undoubtedly)\s+"
+        r"(?:changes?|solves?|proves?|demonstrates?|succeeds?|works?|correct|effective|reliable))",
+    ),
+    Rule(
+        "RW-W-226",
+        "warn",
+        "inference-process-narration",
+        "正文疑似叙述得出结论的过程；请直接写推论、依据和成立条件。",
+        r"(?:(?:因此|据此|由此)(?:我们)?(?:可以|能够|足以)?(?:得出|作出)(?:一个)?(?:结论|判断)|"
+        r"(?:我们)?(?:可以|有理由)(?:据此)?(?:认为|相信|判断)|"
+        r"it\s+(?:can\s+therefore|follows\s+that\s+we\s+can)\s+be\s+concluded|"
+        r"we\s+(?:can|have\s+reason\s+to)\s+(?:conclude|believe|infer))",
+    ),
+    Rule(
+        "RW-W-228",
+        "warn",
+        "ornamental-separator",
+        "正式正文疑似使用模型生成的装饰横线分隔内容；请改为真实标题层级、段落过渡或直接连续行文。",
+        r"^[ \t]*(?:-{3,}|_{3,}|(?:\*[ \t]*){3,}|—{3,}|－{3,})[ \t]*\r?$",
+    ),
 )
 
 
@@ -393,6 +447,20 @@ SYMMETRIC_STRUCTURES = re.compile(
     r"both\s+[^.?!;\n]{1,60}\s+and\s+[^.?!;\n]{1,60}(?=[.?!;]))",
     re.IGNORECASE,
 )
+HEADING_RHETORIC = re.compile(
+    r"(?:这才是|真正(?:的)?(?:问题|关键|核心|答案|价值|意义)|"
+    r"完全(?:改变|解决|不同)|彻底(?:改变|解决)|"
+    r"不是[^。！？\n]{1,50}而是|为什么[^。！？\n]{0,30}才|"
+    r"the\s+real\s+(?:problem|key|answer)|not\s+[^.?!\n]{1,60}\s+but)",
+    re.IGNORECASE,
+)
+RHETORICAL_STACK = re.compile(
+    r"(?:真正|完全|彻底|绝对|显然|无疑|毫无疑问|事实(?:已经|已)?(?:充分)?证明|"
+    r"这(?:充分|清楚|明确)?(?:说明|表明|证明)|这才是|不是[^。！？\n]{1,60}而是|"
+    r"由此可见|因此(?:我们)?可以得出|"
+    r"truly|completely|absolutely|clearly|undoubtedly|this\s+proves|not\s+[^.?!\n]{1,60}\s+but)",
+    re.IGNORECASE,
+)
 
 
 def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
@@ -421,6 +489,84 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                 severity="warn",
                 category=category,
                 message=message,
+                line=line,
+                column=column,
+                excerpt=_excerpt_for(text, match.start()),
+            )
+        )
+
+    heading_candidates: list[tuple[int, str]] = []
+    for match in re.finditer(r"(?m)^[ \t]{0,3}#{1,6}[ \t]+(?P<title>[^\n#]+?)[ \t]*(?:#+[ \t]*)?$", text):
+        heading_candidates.append((match.start("title"), match.group("title")))
+    for match in re.finditer(r"(?m)^(?P<title>[^\n\r]{1,80})\r?\n[=-]{3,}[ \t]*\r?$", text):
+        heading_candidates.append((match.start("title"), match.group("title")))
+    first = re.match(r"\A[ \t]*(?P<title>[^\n\r]{1,48})\r?\n[ \t]*\r?\n", text)
+    if first and not first.group("title").lstrip().startswith("#"):
+        heading_candidates.append((first.start("title"), first.group("title")))
+    for offset, title in heading_candidates:
+        marker = HEADING_RHETORIC.search(title)
+        if not marker:
+            continue
+        absolute = offset + marker.start()
+        synthetic = re.match(r".", text[absolute:])
+        if synthetic:
+            line, column = _line_and_column(text, absolute)
+            findings.append(
+                Finding(
+                    rule_id="RW-W-223",
+                    severity="warn",
+                    category="rhetorical-heading",
+                    message="标题疑似直接输出重要性判断、二元反转或内部结论；请改为读者可识别的对象、事件或问题。",
+                    line=line,
+                    column=column,
+                    excerpt=_excerpt_for(text, absolute),
+                )
+            )
+
+    paragraph_start = 0
+    for paragraph in re.split(r"\r?\n[ \t]*\r?\n", text):
+        if paragraph.strip():
+            markers = list(RHETORICAL_STACK.finditer(paragraph))
+            if len(markers) >= 2:
+                absolute = paragraph_start + markers[0].start()
+                line, column = _line_and_column(text, absolute)
+                findings.append(
+                    Finding(
+                        rule_id="RW-W-227",
+                        severity="warn",
+                        category="rhetorical-reasoning-stack",
+                        message="同一段落连续使用强化、自证、反转或推论标记，但不一定增加事实；请按事实、条件和结论重组。",
+                        line=line,
+                        column=column,
+                        excerpt=_excerpt_for(text, absolute),
+                    )
+                )
+        paragraph_start += len(paragraph)
+        following = re.match(r"\r?\n[ \t]*\r?\n", text[paragraph_start:])
+        if following:
+            paragraph_start += len(following.group(0))
+
+    bullet_items = list(
+        re.finditer(
+            r"(?m)^[ \t]*[-*+][ \t]+(?!\[[ xX]\])(?P<body>[^\n]{1,100})$",
+            text,
+        )
+    )
+    short_fragments = [
+        match
+        for match in bullet_items
+        if len(match.group("body").strip()) <= 60
+        and not re.search(r"[。！？.!?；;：:]$", match.group("body").strip())
+    ]
+    if len(short_fragments) >= 3:
+        match = short_fragments[0]
+        line, column = _line_and_column(text, match.start())
+        findings.append(
+            Finding(
+                rule_id="RW-W-229",
+                severity="warn",
+                category="fragment-bullet-stacking",
+                message="连续短横杠项目可能把正文切成标签碎片；请合并为连续论述或改用有实际层级的结构。正式条款和操作清单可保留。",
                 line=line,
                 column=column,
                 excerpt=_excerpt_for(text, match.start()),
