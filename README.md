@@ -20,13 +20,13 @@
 
 ## 中文
 
-ReviewWrite 1.0.0 从“词组预检”升级为“确定性规则 + 交付语义复核”双层门禁。它检查标题和结构是否面向读者、提示词和任务服从是否泄漏、自证式口气是否替代事实、主张是否越过证据，以及数字、引用和限定条件是否保持。五项复核与最终正文的 SHA-256 绑定，正文改一个字符都必须重新复核；规则没有命中，也不能再直接冒充审核通过。
+ReviewWrite 1.1.0 在 1.0“确定性规则 + 正文哈希绑定语义复核”双层门禁基础上，新增**跨模型写作特征校准（GPT、Gemini、Claude、Grok、DeepSeek、通义 Qwen）**、**互联网与职场黑话解构**、**推理标签与自言自语独白拦截**，以及**证据保持型去同质化（降低机器模板复现度）**。五项语义复核仍与最终正文的 SHA-256 绑定，正文改一个字符都必须重新复核；规则没有命中，也不能直接冒充审核通过。
 
-这不是扩充一份禁词表。“真正、完全、显著、不是……而是……”有明确比较、统计、定义或规范功能时可以保留；没有新增事实，只在替结论自我认证时，才进入回改。
+这不是扩充一份禁词表，更不是用同义词乱替或塞入虚构细节去迎合检测器。“闭环控制、模型对齐、时间颗粒度、真正、显著、不是……而是……”有明确工程、统计、定义或规范功能时完整保留；只有在“对齐颗粒度、以……为抓手、跑通商业闭环、说白了、Here's the kicker、No fluff”或连续递进套话空转时，才提示还原为主体、动作、指标和依据。
 
 ### 先审后写，保护事实，交付正文
 
-审写 · ReviewWrite 面向中英文专业写作：先判断文本和目标，再评审、改写、复核。它保护事实、引用、限定条件和作者声音，不把“像人”理解为制造错误或规避检测。
+审写 · ReviewWrite 面向中英文专业写作：无论初稿由 GPT、Gemini、Claude、Grok、DeepSeek 还是 Qwen 生成或润色，都先判断文本和目标，再评审、改写、复核。它保护事实、引用、限定条件和作者声音，通过打破等长矩形段落、清理机械连接词链与空泛拔高尾巴来消除高重复模板感，不把“像人”或“降模板率”理解为制造错字、打乱语序或规避检测。
 
 运行环境要求 Python 3.10 或更高版本；正文审写默认只读取本地输入，不联网。更新检查是可选能力，只有用户或平台明确启用时才访问 Release。
 
@@ -42,13 +42,13 @@ python3 scripts/long_document_review.py path/to/long-draft.md --format json
 
 ### 核心边界：不拿幻觉换人味
 
-ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节。无法确认的内容，会保留限定条件，指出需要核实的部分，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
+ReviewWrite 不会为了让文字更像人，而主动编造经历、数据、来源、案例、情绪或细节，也不会凭模型记忆向通用草稿塞入原文未提供的外部事实。无法确认的内容，会保留限定条件，指出需要核实的部分，或降低主张强度。文字可以更自然，但事实不能靠虚构来补齐。
 
 它背后的方法论来自教授团队与专业研发团队长期从事高质量写作、审稿和交付的经验积累，不是把几个“去 AI 痕迹”词表拼在一起。ReviewWrite 关注的是主张是否有证据、限定条件是否完整、体裁是否合适，以及修改后能否真正交付。
 
 ### 来源透明度：只审计，不清除
 
-ReviewWrite 可以检查文件中可观察的 Content Credentials、C2PA/JUMBF 或 SynthID 相关线索，并定位可能影响交付完整性的 Unicode 格式控制字符。审计结果严格区分“已发现”“未发现”和“无法判断”，不把来源线索缺失解释成来源不存在；输入文件保持不变，不提供水印移除、来源伪装或检测器规避功能。
+ReviewWrite 可以检查文件中可观察的 Content Credentials、C2PA/JUMBF 或 SynthID 相关线索（支持区分 DOCX/PPTX 内嵌媒体标记与正文文字引用），并定位可能影响交付完整性的 Unicode 格式控制字符。审计结果严格区分“已发现”“文字引用”和“无法判断”，不把来源线索缺失解释成来源不存在；输入文件保持不变，不提供水印移除、来源伪装或检测器规避功能。
 
 ### 名称与调用：短，但不混乱
 
@@ -57,7 +57,7 @@ ReviewWrite 可以检查文件中可观察的 Content Credentials、C2PA/JUMBF �
 - 自然语言简称：审写、ReviewWrite。它们只用于支持自然语言触发的宿主，不是第二份可安装 Skill，也不保证成为 slash alias。
 - 不要并行安装旧 `review-write` 和新 `reviewwrite`；安装器发现旧目录时会拒绝并行安装，先报告路径，再由用户决定迁移或删除。
 
-想了解不同模型常见 AI 味、普通 humanizer 的风险，以及如何把“去 AI 痕迹”前移到写作契约，见 [AI 写作痕迹与 Humanizer 策略](references/ai-writing-signals.md)。
+想了解 GPT、Gemini、Claude、Grok、DeepSeek、Qwen 各自常见 AI 味、如何合规降低模板同质化率，以及普通 humanizer 的风险，见 [AI 写作痕迹与跨模型审写策略](references/ai-writing-signals.md)。
 
 ### 一句话交给智能体安装
 
@@ -73,10 +73,10 @@ ReviewWrite 可以检查文件中可观察的 Content Credentials、C2PA/JUMBF �
 
 它主要解决：
 
-- 提示词、推理过程、工具调用和编辑指令混入正式正文；
-- 表面“去 AI 腔”导致事实、数字、引用、限定条件和作者声音漂移；
-- 用一套通用规则误改论文、基金、公众号、政策、公文等不同体裁；
-- 把中文规则直接翻译到英文，或忽略本语种、地区和机构的表达规范。
+- 提示词、`<think>` 推理标签、自言自语独白、工具尾注和编辑指令混入正式正文；
+- 互联网大厂黑话、跨模型网感口头禅、机械递进连接词链和等长矩形段落造成的高同质化模板感；
+- 表面“去 AI 腔 / 暴力降重”导致事实、数字、术语、引用、限定条件和作者声音漂移；
+- 用一套通用规则误改论文、基金、公众号、政策、公文等不同体裁，或忽略跨语种与机构规范。
 
 ### 核心闭环
 
@@ -90,22 +90,16 @@ ReviewWrite 严格分离四个写作表面：评审报告、修改计划、正�
 ### 核心能力
 
 - 适配论文、基金、政策、报告、公文、备忘录、营销和双语写作；
-- 0.6.0 增加跨语言专业审写：中英互译时保护数字、引用、术语、主张、限定条件和责任边界，并按目标地区、体裁和话语共同体独立审校；
+- 1.1.0 新增跨模型写作校准：针对 GPT、Gemini、Claude、Grok、DeepSeek 与通义 Qwen 初稿的不同模板倾向，提供写前契约与改后定向收敛方案；
+- 1.1.0 新增互联网黑话解构、推理标签/独白阻断、网感钩子清理与机械连接词/拔高尾句去同质化规则（`RW-W-230—RW-W-234`），在零事实漂移前提下消除模板复现；
+- 1.1.0 完善非散文结构保护与豁免一致性：自动屏蔽 Markdown 围栏代码块与 YAML frontmatter 中的版式误报，区分 Setext 二级标题与装饰横线，统一单条与组合规则的体裁豁免及 `--ignore-rule` 控制；
+- 支持跨语言专业审写：中英互译时保护数字、引用、术语、主张、限定条件和责任边界，并按目标地区、体裁和话语共同体独立审校；
 - 支持超长文档审写：对十万字及更长文本进行章节优先分块，使用一次性全文行索引定位发现项、中文数字和标题，并限制结果体积，避免重复扫描和把片段检查误报成全文完成；
-- 根据语言、读者和真实体裁选择表达，不强套模板；
 - 可作为宿主智能体的写作质量控制层：风险路由负责决定是否接入，可执行门禁负责抽取、严格终检和“失败时不输出正文”，问题最多回改两轮后再交付；
-- 1.0.0 增加交付语义控制：标题与结构读者化、内部过程分离、自证删除、主张—证据边界和事实限定保持五项复核，与最终正文哈希绑定；
+- 交付语义控制：标题与结构读者化、内部过程分离、自证删除、主张—证据边界和事实限定保持五项复核，与最终正文哈希绑定；
 - 增加技术解读/产业评论路由：检查模型、推理、设备、内存和性能主张中的叠加式模板信号与技术口径；
-- 默认保护数字、引用、专名、义务和限定条件；
-- 将评审、修改稿和复核分开，并对正式正文做泄漏预检；
 - 泄漏预检支持体裁与语境感知：AI 安全论文讨论 `system prompt`、公文使用结构化条目等被授权情形，用 `--context`/`--genre` 声明后降级或放宽，避免正当写作被误判；
-- 识别空泛强化和公式化转折，但必须按体裁、上下文与证据判断，不使用生硬禁词表；
-- 识别技术评论中的叠加式模板信号，以及公众号文章中反复使用“第一、第二、第三”的机械枚举；
-- 识别“值得注意的是”“总的来说”、无来源“研究表明”、连续“我们可以看到……这说明……”、翻译腔和对称句式堆叠；
-- 检查 Markdown 标题末尾误带句号的情况；正文中的正常句号不触发此项，问号、感叹号和版本号标题保留；
-- 检查 Markdown、Setext 和文首短标题中的“这才是、真正、完全、不是……而是……”式编辑判断，并识别隐性任务服从、自证式结论、确定性强化、单次推理旁白、段落级堆叠、装饰横线和连续短横杠碎片；
-- 对 DOCX/PPTX 提供可选的只读字体与渲染质检：检查中英文字体声明、主题/继承不确定项、profile 不匹配和目标字体库存；不静默改文件；
-- 对超长 UTF-8 文本提供分块预检和全局一致性索引；明确报告覆盖范围，不把部分审核声称为全文完成。
+- 对 DOCX/PPTX 提供可选的只读字体、渲染与来源完整性审计：不静默改文件。
 
 ```bash
 # 先生成与正文绑定的语义复核记录，逐项完成复核，再执行最终门禁
@@ -120,13 +114,17 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt --semantic-review seman
 | 类型 / 规则 | 识别范围 | 常见表现 | 处置与不误伤边界 |
 | --- | --- | --- | --- |
 | 提示词泄漏 `RW-F-001` | system/developer prompt、角色标签、忽略指令等 | “系统提示词”“忽略以上要求”“[INST]” | 正文 `blocker`；AI 安全论文等授权语境降为人工复核警告 |
-| 隐藏推理泄漏 `RW-F-002` | 思考链、分析通道、逐步内部推理 | “以下是我的完整思考过程” | 正文 `blocker`；不得把内部推理写进交付正文 |
+| 隐藏推理泄漏 `RW-F-002` | `<think>`/`<thought>` 等推理标签、思考链、分析通道 | `<think>`、“以下是我的完整思考过程” | 正文 `blocker`；不得把内部推理通道写进交付正文 |
 | 模型自述 `RW-F-003` | AI/语言模型身份和能力免责声明 | “作为一个 AI……” | 正文 `blocker`；合法的 AI 辅助披露可声明语境后复核 |
 | 任务与编辑残留 `RW-F-004/RW-W-102` | 用户要求、改稿待办、版本过程 | “根据用户要求”“待补充”“下一轮修改” | 任务复述和编辑指令不得进入正文；评审报告可以引用 |
-| 工具/运行时残留 `RW-F-005` | 工具调用、Skill、Agent、内部路径和路由 | “我调用了工具”“SKILL.md”“working tree” | 正文 `blocker`；软件文档或审计报告需声明讨论语境 |
+| 工具/运行时残留 `RW-F-005` | 工具调用、Skill、内部路径及智能体自动尾注 | “我调用了工具”“SKILL.md”“Generated with Claude Code” | 正文 `blocker`；软件文档或审计报告需声明讨论语境 |
 | 内部契约术语 `RW-F-006` | 只供宿主/编辑流程使用的证据边界、验收标准、终检和 surface 名称 | “证据边界”“最终门禁”“deliverable_body” | 普通正文 `blocker`；法律分析、研究方法、软件文档等确实讨论该概念时声明授权语境 |
 | 隐性任务服从 `RW-F-007` | 未直说提示词，但叙述如何满足要求、采用文风或安排生成步骤 | “为了满足任务要求，本文将……” | 正文 `blocker`；直接写读者需要的内容 |
 | 工作流与聊天收尾 `RW-W-101/RW-W-103` | 过程预告、助手交接语 | “下面我将介绍”“希望这对你有帮助” | `warn`；只清理正文中的过程话术，不改真实对话转写 |
+| 推理独白残留 `RW-W-230` | 推理模型自言自语、自我纠正或拆解独白 | “让我先拆解一下”“等等，这里需要重新审视”“Let me step back” | `warn`；删去思考独白，只留面向读者的论据与结论；对话转写豁免 |
+| 互联网黑话与行话堆叠 `RW-W-231/RW-W-232` | 空洞商业行话搭配或同段密集堆叠黑话词 | “对齐颗粒度”“以……为抓手跑通商业闭环”“move the needle”、泛化 `load-bearing` | `warn`；还原为主体、动作、对象和指标；闭环控制、模型对齐、时间颗粒度等专业术语保留 |
+| 网感钩子与伪坦诚垫词 `RW-W-233` | 社交媒体戏剧钩子、反套话标榜与姿态性坦诚 | “说白了”“不整虚的”“扎心的是”“Here's the kicker”“No fluff”“Honestly,” | `warn`；正式文体直接陈述分歧与结论；对话转写豁免 |
+| 同质化递进与拔高尾巴 `RW-W-234` | 近距离连续机械递进词或句末空泛拔高伴随语 | 连续“此外、与此同时、不仅如此”、反复“充分彰显了……的重要性 / highlighting the importance of” | `warn`；改为具体主语承接与因果推进，按证据权重调整句段长短 |
 | 空泛开场与重要性 `RW-W-201/RW-W-202/RW-W-207` | 时代背景、无标准的“重要/关键/全面提升” | “在当今时代”“这件事意义重大” | 改成主体、动作、对象、范围和依据；正式规范词保留 |
 | 公式化转折与悬念 `RW-W-203/RW-W-208` | 二元反转、悬念桥接和重复总结 | “不是……而是……”“换句话说”“最危险的地方” | 单次有逻辑可保留；连续堆叠或不增加信息时 `warn` |
 | 极端重要性标签 `RW-W-214` | “最硬、最关键、绝对不能”等简短排序宣告 | “最硬的一点是效率” | 要求比较范围、判断标准、对象和依据；不能证明排序时改成具体约束 |
@@ -134,9 +132,9 @@ python3 scripts/reviewwrite_gate.py path/to/response.txt --semantic-review seman
 | 话语填充与重复总结 `RW-W-216/RW-W-217` | 提醒读者注意或重复收束，却没有新增信息 | “值得注意的是”“总的来说” | 直接写新增事实、判断、适用范围或行动；单纯重复时删除 |
 | 模糊权威与推论旁白 `RW-W-218/RW-W-220` | 无可定位来源的背书，或连续用观察话术推进结论 | “研究表明”“我们可以看到……这说明……” | 补真实来源和推论条件；无法核验时改为有限判断 |
 | 翻译腔与对称句式堆叠 `RW-W-219/RW-W-221` | 直译句法或多组平衡结构替代信息取舍 | “对于企业而言，进行一个……”“既要……也要……”连续出现 | 按目标语言重组主谓宾；按事实、判断和行动重排，单个功能性句式可保留 |
-| 标题末尾句号 `RW-W-222` | Markdown 标题误带句末句号 | `# 项目实施方案。` | 删除标题末尾句号；问号、感叹号和版本号不机械改动 |
+| 标题末尾句号 `RW-W-222` | Markdown 标题误带句末句号 | `# 项目实施方案。` | 删除标题末尾句号；代码块注释、问号、感叹号和版本号不误伤 |
 | 标题与自证语义 `RW-W-223—RW-W-227` | 标题中的编辑判断、自证式结论、确定性强化、单次推理旁白和段落堆叠 | “这才是真正的问题”“事实充分证明”“因此我们可以得出结论” | 改为对象、事实、条件和有限结论；有定义、比较、统计或规范功能的强词保留 |
-| 装饰横线与短横杠碎片 `RW-W-228/RW-W-229` | 独立横线和三个以上短标签式项目切碎正文 | `---`、连续“- 高效协同” | 改为连续正文或真实标题层级；法规条款、步骤和参数清单保留 |
+| 装饰横线与短横杠碎片 `RW-W-228/RW-W-229` | 独立横线和三个以上短标签式项目切碎正文 | `---`、连续“- 高效协同” | 改为连续正文或真实标题层级；Setext 二级标题、YAML 头及公文/政策规范清单自动区分或豁免 |
 | 宣传腔与格式模板 `RW-W-204/RW-W-205` | 空泛赋能、固定卖点、标签式列表 | “全面赋能”“打造新生态” | 结合政策、营销和公文体裁判断，不使用跨体裁禁词 |
 | 技术评论叠加信号 `RW-W-209—RW-W-212` | 模型/推理/设备文本中的反转、重要性、用户泛化、预测和数字 | “这个细节很关键”+“大多数用户”+“更可能” | 只在 `public-article`/`technical-commentary` 语境告警；要求补机制、指标、来源和条件 |
 | 机械枚举 `RW-W-213` | 三个以上句首“第一、第二、第三/首先、其次、最后” | 全文每段都用同一排序节奏 | `warn`；先区分事实、证据、判断、行动；政策条文、方法步骤和正式清单可保留 |
@@ -222,7 +220,7 @@ python3 scripts/reviewwrite_update.py check --format json   # 仅在任务结束
 
 ### 站在已有项目之上
 
-ReviewWrite 吸收并重新组织 Stop Slop、Humanizer-zh 和 skill-deslop 的可复用能力，同时增加文档本体、体裁与语言路由、泄漏硬门、few-shot 选择和改后验证。精确来源、版本和许可见 [NOTICE.md](NOTICE.md) 与 [sources.lock.json](sources.lock.json)。
+ReviewWrite 吸收并重新组织 Stop Slop、Humanizer-zh、skill-deslop 和 humanizer 的可复用思路，同时严格坚持“不凭模型记忆补写外部事实”的证据边界，增加文档本体、跨模型路由、泄漏硬门、few-shot 选择和双层门禁验证。精确来源、版本和许可见 [NOTICE.md](NOTICE.md) 与 [sources.lock.json](sources.lock.json)。
 
 ### 贡献与许可
 
@@ -232,15 +230,15 @@ ReviewWrite 吸收并重新组织 Stop Slop、Humanizer-zh 和 skill-deslop 的�
 
 ## English
 
-ReviewWrite 1.0 adds a two-layer delivery gate: deterministic signals plus a semantic review bound to the exact final body by SHA-256. A clean regex scan is no longer sufficient to release a document. The required review covers reader-facing titles and structure, separation of instruction/process residue, removal of self-certifying rhetoric, claim-evidence boundaries, and preservation of facts and qualifications. Ornamental rules and stacked short-dash fragments are reviewed instead of being accepted as default formal prose.
+ReviewWrite 1.1 builds on the 1.0 two-layer delivery gate (deterministic signals plus a SHA-256 body-bound semantic review) by adding **cross-model writing calibration across GPT, Gemini, Claude, Grok, DeepSeek, and Qwen**, **corporate/internet buzzword de-slopping**, **reasoning-tag and deliberation-monologue blocking**, and **evidence-preserving de-homogenization**. A clean regex scan is still never sufficient to release a document, and any single-character edit invalidates the semantic review record.
 
-This is not a larger blacklist. Terms such as “truly,” “completely,” “significant,” or “not X but Y” may remain when they perform a necessary definitional, comparative, statistical, or normative function.
+This is neither a larger blacklist nor a detector-bypass spinner. Legitimate domain terms (`load-bearing wall`, `model alignment`, `closed-loop control`, `significant at p < 0.01`, or functional contrasts) remain intact, while empty corporate collocations (`move the needle`, figurative `truly load-bearing`, `synergistic ecosystem`), social engagement hooks (`Here's the kicker`, `No fluff`, `Honestly,`), and stacked transitions/participial tails are flagged for concrete revision.
 
 ### Review first, then rewrite
 
-审写 · ReviewWrite is built for professional Chinese and English writing: it identifies the goal and context, then reviews, rewrites, and verifies the text while preserving facts, citations, qualifications, and authorial voice. It does not promise detector evasion or add mistakes to imitate a human author.
+审写 · ReviewWrite is built for professional Chinese and English writing across drafts generated or edited with GPT, Gemini, Claude, Grok, DeepSeek, or Qwen: it identifies the goal and context, then reviews, rewrites, and verifies the text while preserving facts, citations, qualifications, and authorial voice. It reduces template homogeneity through structural specificity rather than adding mistakes or promising detector evasion.
 
-Its central boundary is explicit: ReviewWrite does not invent experiences, data, sources, examples, emotions, or details to make text appear more human. When something cannot be confirmed, it preserves the qualification, marks it for review, or narrows the claim.
+Its central boundary is explicit: ReviewWrite does not invent experiences, data, sources, examples, emotions, or unverified parametric details to make text appear more human. When something cannot be confirmed, it preserves the qualification, marks it for review, or narrows the claim.
 
 Its method is informed by a professor-led and professional product team with long-term experience in high-quality writing, review, and delivery. ReviewWrite is not a bundle of “AI trace removal” word lists; it evaluates claims, evidence, qualifications, genre fit, and whether the revised text is ready for real use.
 
@@ -251,7 +249,7 @@ Its method is informed by a professor-led and professional product team with lon
 - Natural-language names: 审写 and ReviewWrite. They are only natural-language triggers on hosts that support them, not separately installable Skills or guaranteed slash aliases.
 - Do not install both legacy `review-write` and `reviewwrite`. The installer refuses a parallel install when it detects the old directory, then reports its path for a user-directed migration or removal.
 
-For AI writing signals, common humanizer risks, and ReviewWrite's writing-before-rewriting strategy, see [AI writing signals and humanizer strategy](references/ai-writing-signals.md).
+For cross-model AI writing signals (GPT, Gemini, Claude, Grok, DeepSeek, Qwen), de-homogenization strategy, and common humanizer risks, see [AI writing signals and humanizer strategy](references/ai-writing-signals.md).
 
 ### One-sentence agent installation
 
@@ -267,10 +265,10 @@ It never trades hallucinations for a more “human” tone: no invented experien
 
 It addresses four recurring failures:
 
-- prompts, reasoning, tool calls, or editorial instructions leaking into the deliverable;
-- surface-level “humanization” changing facts, numbers, citations, qualifications, or authorial voice;
-- one generic style rule being applied across papers, grants, public articles, policies, and official documents;
-- translating rules between languages without respecting locale, discourse community, or institutional convention.
+- prompts, `<think>` reasoning tags, deliberation monologues, tool footers, or editorial instructions leaking into the deliverable;
+- corporate buzzwords, social-first hooks, stacked transition chains, and uniform paragraph shells inflating template homogeneity;
+- surface-level “humanization” or aggressive spinning changing facts, numbers, terminology, citations, qualifications, or authorial voice;
+- one generic style rule being applied across papers, grants, public articles, policies, and official documents without locale or genre awareness.
 
 ### Core loop
 
@@ -282,19 +280,14 @@ ReviewWrite separates four writing surfaces: the review report, revision plan, d
 
 ### Core capabilities
 
-- genre-aware Chinese and English writing support;
+- genre-aware Chinese and English writing support with cross-model calibration for GPT, Gemini, Claude, Grok, DeepSeek, and Qwen drafts;
+- deterministic + composite checks for reasoning-tag/monologue residue, corporate/internet buzzwords, conversational engagement hooks, and homogenized transition/participial-tail chains (`RW-W-230—RW-W-234`);
+- non-prose masking for Markdown fenced code blocks and YAML frontmatter, Setext H2 disambiguation, and unified profile exemptions and `--ignore-rule` handling across single and composite rules;
 - cross-language professional review between Chinese and English, preserving terminology, claims, qualifications, and responsibility boundaries across translation;
 - long-document review for 100k+ characters: heading-aware chunking, one reusable line-offset index, bounded output, global locations, Chinese-context number/heading indexes, term variants, and duplicate-paragraph signals;
 - technical commentary review for model, inference, device, memory, and performance claims, including composite template signals and scope checks;
-- context-sensitive routing by language, audience, locale, and discourse community;
-- an executable delivery gate that extracts the unique body, runs strict checks, emits body-only output on success, and emits no body on failure;
-- a five-part semantic review tied to the final body hash, so any post-review edit invalidates the review record;
-- protection for facts, numbers, citations, names, obligations, and qualifications;
-- separated review, revision, deliverable, and verification surfaces with leakage checks;
-- genre- and context-aware preflight: authorized cases such as an AI-safety paper discussing `system prompt`, or an official document using structured items, are declared with `--context`/`--genre` and downgraded or relaxed instead of hard-failing legitimate writing;
-- contextual checks for empty intensifiers and formulaic pivots, rather than a rigid blacklist of “AI words”;
-- composite checks for stacked technical-commentary signals, vague authority, inference narration, translationese, symmetric structures, and repetitive sentence-initial enumeration, with genre-aware exemptions;
-- optional audit-only DOCX/PPTX delivery QA for Chinese/Latin font declarations, theme/inheritance uncertainty, confirmed-profile mismatches, target font inventories, and a render gate; it never silently rewrites a source Office file.
+- an executable delivery gate that extracts the unique body, runs strict checks, validates the SHA-256-bound five-part semantic review, emits body-only output on success, and emits no body (with full lint + semantic diagnostics on stderr) on failure;
+- optional audit-only DOCX/PPTX delivery typography QA and read-only provenance/Unicode format-control auditing across text, DOCX, and PPTX containers.
 
 ```bash
 python3 scripts/reviewwrite_semantic.py init path/to/response.txt --output semantic-review.json
@@ -308,13 +301,17 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Type / rules | Scope | Typical signal | Handling and boundary |
 | --- | --- | --- | --- |
 | Prompt leakage `RW-F-001` | System/developer prompts, role tags, instruction overrides | `system prompt`, `[INST]`, “ignore previous instructions” | `blocker` in deliverables; authorized AI-safety discussion is downgraded for review |
-| Hidden reasoning `RW-F-002` | Chain-of-thought, analysis channels, internal step-by-step reasoning | “my complete reasoning process” | `blocker`; never place hidden reasoning in the deliverable |
+| Hidden reasoning `RW-F-002` | `<think>`/`<thought>` tags, chain-of-thought, analysis channels | `<think>`, “my complete reasoning process” | `blocker`; never place hidden reasoning in the deliverable |
 | Model self-description `RW-F-003` | AI identity and capability disclaimers | “As an AI…” | `blocker`; authorized disclosure is reviewed in context |
 | Task/editor residue `RW-F-004/RW-W-102` | User-task recap, TODOs, revision workflow | “based on the user request”, “TODO” | Remove from deliverables; review reports may quote the span |
-| Tool/runtime residue `RW-F-005` | Tool calls, Skill/Agent names, internal paths and routes | `tool call`, `SKILL.md`, `working tree` | `blocker` in deliverables; software docs/audits declare their context |
+| Tool/runtime residue `RW-F-005` | Tool calls, Skill/Agent names, internal paths, generation footers | `tool call`, `SKILL.md`, `Generated with Claude Code` | `blocker` in deliverables; software docs/audits declare their context |
 | Internal contract residue `RW-F-006` | Host/editor-only terms such as evidence boundary, acceptance criteria, final gate, and surface names | `evidence boundary`, `final gate`, `deliverable_body` | `blocker` in ordinary deliverables; declare an authorized subject context when the concept itself is being discussed |
 | Latent instruction residue `RW-F-007` | Task compliance, style instructions, or generation order without explicit prompt terminology | “To satisfy the user request, this article will…” | `blocker`; deliver reader-facing content directly |
 | Workflow/chat handoff `RW-W-101/RW-W-103` | Process previews and assistant closings | “This section will…”, “Hope this helps” | `warn`; does not rewrite genuine dialogue transcripts |
+| Reasoning monologue `RW-W-230` | Self-talk, self-correction, or deliberation leaked from reasoning models | “Let me step back”, “Wait—let me double-check” | `warn`; keep only reader-facing evidence and conclusions; exempted in transcripts |
+| Buzzword collocations/stacks `RW-W-231/RW-W-232` | Corporate/internet jargon collocations or dense paragraph buzzword stacks | “move the needle”, figurative “truly load-bearing”, Chinese corporate buzzwords | `warn`; replace with actor, action, metric, and mechanism; preserve technical terms |
+| Engagement hooks/candor filler `RW-W-233` | Social-media bait, anti-fluff posture, or performative candor | “Here's the kicker”, “No fluff”, “Buckle up”, “Honestly,” | `warn`; state claims and trade-offs directly; exempted in transcripts |
+| Homogenized transitions/tails `RW-W-234` | Clustered additive connectors or shallow participial significance tails | “Furthermore… Moreover… Additionally…”, “, highlighting the importance of…” | `warn`; vary clause progression by evidence weight and remove redundant tails |
 | Empty opening/significance `RW-W-201/RW-W-202/RW-W-207` | Generic era framing and unsupported emphasis | “in today’s world”, “highly significant” | Replace with actor, action, scope, standard, and evidence; preserve formal normative terms |
 | Formulaic contrast/bridge `RW-W-203/RW-W-208` | Binary reversals, suspense bridges, repeated summaries | “not X but Y”, “in other words”, “the most dangerous part” | One functional contrast may stay; stacked or empty uses warn |
 | Promotional/format template `RW-W-204/RW-W-205` | Empty enablement language, fixed selling points, label lists | “unlock the ecosystem”, bold label blocks | Apply genre-aware review; no cross-genre blacklist |
@@ -325,15 +322,15 @@ These are observable writing and delivery signals, not an authorship classifier.
 | Discourse filler/redundant summary `RW-W-216/RW-W-217` | Attention markers or closure without new information | “It is worth noting”, “Overall” | State the new fact, judgment, scope, or action directly |
 | Vague authority/inference narration `RW-W-218/RW-W-220` | Unlocatable attribution or stacked “we can see/this shows” narration | “Research shows”, “We can see…this shows…” | Add a real source and inference conditions, or narrow the claim |
 | Translationese/symmetric stacking `RW-W-219/RW-W-221` | Source-language syntax or repeated balanced clauses replacing information choices | literal “conduct an analysis” structures; repeated “both…and…” | Rebuild target-language syntax and organize by fact, judgment, and action |
-| Heading-final period `RW-W-222` | A Markdown heading is emitted as a full sentence with a terminal period | `# Implementation plan.` | Remove the terminal period; keep functional question marks, exclamation marks, and version numbers |
+| Heading-final period `RW-W-222` | A Markdown heading is emitted as a full sentence with a terminal period | `# Implementation plan.` | Remove the terminal period; code comments, question/exclamation marks, and version numbers stay untouched |
 | Heading/self-certification semantics `RW-W-223—RW-W-227` | Editorial judgments in titles, self-certifying claims, certainty intensifiers, inference narration, and paragraph-level stacks | “The real problem”, “this clearly proves”, “we can conclude” | State the object, evidence, conditions, and bounded conclusion; preserve necessary definitional, statistical, comparative, or normative uses |
-| Ornamental rules/fragment bullets `RW-W-228/RW-W-229` | Separator rules and three or more short label-like dash items fragment formal prose | `---`, repeated `- Deep impact` | Use continuous prose or real heading hierarchy; retain functional clauses, procedures, and parameter lists |
+| Ornamental rules/fragment bullets `RW-W-228/RW-W-229` | Separator rules and three or more short label-like dash items fragment formal prose | `---`, repeated `- Deep impact` | Use continuous prose or real heading hierarchy; Setext H2 underlines, YAML headers, and official/policy lists are respected |
 
 Coverage includes `zh-CN` and general professional English across papers, grants, public articles, technical commentary, policy, official documents, reports, memos, marketing, and bilingual writing. Findings are review signals, not a “human score” or detector-evasion promise.
 
 ### Four reproducible cases
 
-Four synthetic cases show the draft, revision, and verification result. Under the 1.0.0 rules, strict preflight moved from **14 hard failures / 24 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). A long-document regression also processes 324,015 characters in 55 chunks, maps an intentional model self-description to line 9,001, and checks number and duplicate-paragraph indexes. [Read the test code](tests/test_lint.py).
+Four synthetic cases show the draft, revision, and verification result. Under the 1.0+ rules, strict preflight moved from **14 hard failures / 24 warnings** to **0 / 0**; a literal regression check retained 38 protected items (numbers, dates, roles, and qualifiers). A long-document regression also processes 324,015 characters in 55 chunks, maps an intentional model self-description to line 9,001, and checks number and duplicate-paragraph indexes. [Read the test code](tests/test_lint.py).
 
 | Case | Draft | Revision | Main improvement | Preflight |
 | --- | --- | --- | --- | --- |
@@ -345,7 +342,7 @@ Four synthetic cases show the draft, revision, and verification result. Under th
 
 ### Security and provenance
 
-The release bundle contains the Skill, references, one configuration-structure example, local text/Office QA/provenance-audit scripts, and an optional updater. The default writing path stays local: it does not read credentials, modify or upload input prose or source Office files. The provenance audit is read-only: it reports observable Content Credentials/C2PA/JUMBF or SynthID references and Unicode format controls, distinguishes detected, referenced, and indeterminate states, and never removes or disguises source signals. Only an explicitly enabled update check contacts a Release source; only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [Security](SECURITY.md) and [provenance-integrity](references/provenance-integrity.md) for the full boundary.
+The release bundle contains the Skill, references, one configuration-structure example, local text/Office QA/provenance-audit scripts, and an optional updater. The default writing path stays local: it does not read credentials, modify or upload input prose or source Office files. The provenance audit is read-only: it reports observable Content Credentials/C2PA/JUMBF or SynthID references and Unicode format controls across plain text, DOCX, and PPTX containers, distinguishes embedded binary markers, text references, and indeterminate states, and never removes or disguises source signals. Only an explicitly enabled update check contacts a Release source; only an explicitly requested Office render writes PDF/PNG previews to an output directory. Verify the official Release, SHA-256, and artifact attestation before installation, and never overwrite an unknown existing directory. See [Security](SECURITY.md) and [provenance-integrity](references/provenance-integrity.md) for the full boundary.
 
 ### Office delivery QA: audit before any repair
 
@@ -405,7 +402,7 @@ Qualified small improvements enter the edge channel as patches. A stable minor i
 
 ### Built on existing work
 
-ReviewWrite learns from and reorganizes reusable ideas from Stop Slop, Humanizer-zh, and skill-deslop. It adds a writing ontology, genre and language routing, a delivery-leakage gate, few-shot selection, and post-rewrite verification. Exact sources, revisions, and licenses are recorded in [NOTICE.md](NOTICE.md) and [sources.lock.json](sources.lock.json).
+ReviewWrite learns from and reorganizes reusable ideas from Stop Slop, Humanizer-zh, skill-deslop, and humanizer while strictly maintaining its no-invented-facts boundary. It adds a writing ontology, cross-model and genre routing, a delivery-leakage gate, few-shot selection, and body-bound semantic verification. Exact sources, revisions, and licenses are recorded in [NOTICE.md](NOTICE.md) and [sources.lock.json](sources.lock.json).
 
 ### Contributing and license
 

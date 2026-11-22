@@ -125,6 +125,38 @@ class ReviewWriteGateTests(unittest.TestCase):
         self.assertEqual(result["status"], "blocked")
         self.assertIn("RW-W-217", {item["rule_id"] for item in result["findings"]})
 
+    def test_cli_reports_semantic_errors_to_stderr(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "response.txt"
+            path.write_text(
+                "<deliverable_body>样本覆盖186家企业。</deliverable_body>",
+                encoding="utf-8",
+            )
+            review_path = Path(directory) / "semantic.json"
+            review_path.write_text(
+                __import__("json").dumps(
+                    reviewwrite_semantic.review_template("样本覆盖186家企业。"),
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/reviewwrite_gate.py"),
+                    str(path),
+                    "--semantic-review",
+                    str(review_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("SEMANTIC title_structure_reader_facing", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

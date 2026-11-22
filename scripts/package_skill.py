@@ -12,7 +12,7 @@ from runtime_io import configure_utf8_stdio
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 SKILL_ID = "reviewwrite"
 
 

@@ -138,6 +138,8 @@ RULES: tuple[Rule, ...] = (
         "reasoning-leakage",
         "正文疑似暴露隐藏推理、思考过程或分析通道。",
         r"(?:chain[ -]of[ -]thought|internal\s+reasoning|analysis\s+channel|"
+        r"<\s*/?\s*(?:think|thought|reasoning|scratchpad|reflection|inner_monologue)\s*>|"
+        r"◁\s*/?\s*think\s*▷|"
         r"(?:我的|以下是|展示)(?:完整)?(?:思考|推理)(?:过程|链)|"
         r"逐步展示[^。\n]{0,10}(?:推理|思考))",
     ),
@@ -167,7 +169,9 @@ RULES: tuple[Rule, ...] = (
         "正文疑似包含工具调用、运行时或内部模块信息。",
         r"(?:我(?:调用|使用)了?[^。\n]{0,20}(?:搜索|浏览|代码|文件)?工具|"
         r"tool\s+call|tool\s+returned|工具调用|(?:SKILL|AGENTS)\.md|"
-        r"working\s+tree|内部(?:skill|agent|route|模块|路由))",
+        r"working\s+tree|内部(?:skill|agent|route|模块|路由)|"
+        r"(?:🤖\s*)?generated\s+with\s+(?:claude\s+code|chatgpt|gemini|grok|cursor|codex)|"
+        r"co-authored-by:\s*(?:claude|chatgpt|gemini|grok|github\s+copilot))",
     ),
     Rule(
         "RW-F-006",
@@ -383,7 +387,68 @@ RULES: tuple[Rule, ...] = (
         "正式正文疑似使用模型生成的装饰横线分隔内容；请改为真实标题层级、段落过渡或直接连续行文。",
         r"^[ \t]*(?:-{3,}|_{3,}|(?:\*[ \t]*){3,}|—{3,}|－{3,})[ \t]*\r?$",
     ),
+    Rule(
+        "RW-W-230",
+        "warn",
+        "reasoning-monologue-residue",
+        "正文疑似残留推理模型的自言自语、自我纠正或拆解独白；请只保留面向读者的最终分析与结论。",
+        r"(?:让我(?:们)?先(?:理清|捋一捋|拆解一下|重新审视)|"
+        r"(?:等等|慢着|不对)[，,——\- ]{1,3}(?:这里|我们|让我)(?:需要|应该|得|再|重新)|"
+        r"思考到这里[，,]|"
+        r"(?:wait|hold\s+on)[, —\-]{1,3}(?:let(?:'s|\s+me)|that(?:'s|\s+is)\s+not\s+quite)|"
+        r"let\s+me\s+(?:step\s+back|rethink|double[- ]check|think\s+through))",
+    ),
+    Rule(
+        "RW-W-231",
+        "warn",
+        "buzzword-collocation",
+        "句子疑似使用互联网黑话或空洞商业行话替代具体动作；请改写为主体、行动、对象、指标和机制。",
+        r"(?:对齐颗粒度|拉通对齐|打出[^，。！？\n]{0,8}组合拳|组合拳打法|"
+        r"(?:占领|打透|击穿|引爆|撬动)[^，。！？\n]{0,10}(?:用户)?(?:心智|痛点|痒点|爽点|圈层|私域|势能)|"
+        r"沉淀[^，。！？\n]{0,10}(?:方法论|打法|心智|势能)|"
+        r"以[^，。！？\n]{1,16}为抓手[，,]?(?:打通|拉通|撬动|赋能|沉淀|构建|形成)|"
+        r"(?:打通|跑通|构建|形成)[^，。！？\n]{0,12}(?:生态|商业|流量|增长|心智|私域|打法|赋能)闭环|"
+        r"实现品效合一|降维打击|"
+        r"(?:move\s+the\s+needle|low[- ]hanging\s+fruit|synergistic\s+ecosystem|"
+        r"double[- ]click\s+on\s+(?:this|that)|"
+        r"(?:truly|quietly|genuinely|peculiarly)\s+load[- ]bearing|"
+        r"load[- ]bearing\s+(?:insight|assumption|claim|detail|metaphor|concept|phrase)))",
+    ),
+    Rule(
+        "RW-W-233",
+        "warn",
+        "engagement-hook-cliche",
+        "正文疑似混入网感钩子、口语标榜或伪坦诚垫词；正式交付稿请直接陈述事实、分歧或结论。",
+        r"(?:(?:说白了|不整虚的|打开天窗说亮话)[，,：:]|"
+        r"(?:更)?扎心的是[，,：:]?|(?:接下来)?重点来了[，,：:！!]|敲黑板[，,：:！!]|"
+        r"真相(?:其实)?很残酷|"
+        r"here(?:'s|\s+is)\s+the\s+(?:kicker|plot\s+twist)|"
+        r"\bbuckle\s+up\b|\bno\s+fluff\b|"
+        r"let(?:'s|\s+us)\s+(?:dive\s+(?:right\s+)?in|be\s+real|cut\s+to\s+the\s+chase)|"
+        r"what\s+if\s+I\s+told\s+you|"
+        r"^[ \t]*honestly,\s+)",
+    ),
 )
+
+
+COMPOSITE_RULE_IDS: frozenset[str] = frozenset(
+    {
+        "RW-W-209",
+        "RW-W-210",
+        "RW-W-211",
+        "RW-W-212",
+        "RW-W-213",
+        "RW-W-218",
+        "RW-W-220",
+        "RW-W-221",
+        "RW-W-223",
+        "RW-W-227",
+        "RW-W-229",
+        "RW-W-232",
+        "RW-W-234",
+    }
+)
+ALL_RULE_IDS: frozenset[str] = frozenset({rule.rule_id for rule in RULES}) | COMPOSITE_RULE_IDS
 
 
 # These are intentionally interaction rules rather than a larger forbidden-word
@@ -461,19 +526,70 @@ RHETORICAL_STACK = re.compile(
     r"truly|completely|absolutely|clearly|undoubtedly|this\s+proves|not\s+[^.?!\n]{1,60}\s+but)",
     re.IGNORECASE,
 )
+BUZZWORD_TOKENS = re.compile(
+    r"(?:抓手|颗粒度|组合拳|拉通|心智|势能|打法|卡位|生态位|痛点|痒点|爽点|"
+    r"私域|品效合一|赋能|裂变|复盘|矩阵式)",
+    re.IGNORECASE,
+)
+ADDITIVE_TRANSITIONS = re.compile(
+    r"(?:^|(?<=[。！？；.!?\n]))[ \t]*(?:此外|与此同时|不仅如此|更为重要的是|在此基础上|进一步来看|"
+    r"furthermore|moreover|additionally|consequently|importantly)[，,:]",
+    re.IGNORECASE | re.MULTILINE,
+)
+SHALLOW_PARTICIPLE_TAILS = re.compile(
+    r"(?:[，,][ \t]*(?:从而|进而)?(?:充分)?(?:彰显|凸显|印证|折射)了[^。！？\n]{1,28}"
+    r"(?:重要性|必要性|关键作用|深远意义|核心价值)|"
+    r",\s*(?:thereby\s+)?(?:highlighting|underscoring|showcasing|exemplifying|paving\s+the\s+way\s+for)\s+"
+    r"(?:the\s+)?(?:importance|significance|value|role|need|potential)\b)",
+    re.IGNORECASE,
+)
+SETEXT_HEADING_RE = re.compile(
+    r"(?m)^(?P<title>[ \t]*[^ \t\r\n#>*+\-][^\n\r]{0,79})\r?\n(?P<underline>[=-]{3,}[ \t]*)\r?$"
+)
+YAML_FRONTMATTER_RE = re.compile(
+    r"\A---[ \t]*\r?\n(?:[A-Za-z0-9_.-]+[ \t]*:[^\n]*\r?\n)+---[ \t]*(?:\r?\n|\Z)"
+)
+FENCED_CODE_BLOCK_RE = re.compile(
+    r"(?ms)^([ \t]{0,3})(`{3,}|~{3,})[^\n]*\n.*?(?:^\1\2[ \t]*\r?$|(?=\Z))"
+)
+
+
+def _blank_preserving_newlines(segment: str) -> str:
+    return "".join(ch if ch in ("\n", "\r") else " " for ch in segment)
+
+
+def _mask_non_prose(text: str) -> str:
+    """Mask YAML frontmatter and fenced code blocks while preserving line/column offsets."""
+    masked = YAML_FRONTMATTER_RE.sub(lambda m: _blank_preserving_newlines(m.group(0)), text)
+    return FENCED_CODE_BLOCK_RE.sub(lambda m: _blank_preserving_newlines(m.group(0)), masked)
 
 
 def _first_match(matches: list[re.Match[str]]) -> re.Match[str] | None:
     return matches[0] if matches else None
 
 
-def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
+def _has_window_cluster(matches: Sequence[re.Match[str]], count: int, window_chars: int) -> re.Match[str] | None:
+    if len(matches) < count:
+        return None
+    for idx in range(len(matches) - count + 1):
+        if matches[idx + count - 1].start() - matches[idx].start() <= window_chars:
+            return matches[idx]
+    return None
+
+
+def _composite_findings(
+    text: str,
+    profiles: frozenset[str],
+    *,
+    source_text: str | None = None,
+) -> list[Finding]:
     """Find source/syntax stacks without treating every individual phrase as an error.
 
-    Authority, inference-narration, and symmetry checks apply across prose.
-    Technical contrast and scope composites remain limited to public articles
-    and technical commentary.
+    Authority, inference-narration, buzzword-stacking, homogenized transitions,
+    and symmetry checks apply across prose. Technical contrast and scope
+    composites remain limited to public articles and technical commentary.
     """
+    raw = source_text if source_text is not None else text
     findings: list[Finding] = []
 
     def add(
@@ -482,7 +598,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
         message: str,
         match: re.Match[str],
     ) -> None:
-        line, column = _line_and_column(text, match.start())
+        line, column = _line_and_column(raw, match.start())
         findings.append(
             Finding(
                 rule_id=rule_id,
@@ -491,17 +607,17 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                 message=message,
                 line=line,
                 column=column,
-                excerpt=_excerpt_for(text, match.start()),
+                excerpt=_excerpt_for(raw, match.start()),
             )
         )
 
     heading_candidates: list[tuple[int, str]] = []
     for match in re.finditer(r"(?m)^[ \t]{0,3}#{1,6}[ \t]+(?P<title>[^\n#]+?)[ \t]*(?:#+[ \t]*)?$", text):
         heading_candidates.append((match.start("title"), match.group("title")))
-    for match in re.finditer(r"(?m)^(?P<title>[^\n\r]{1,80})\r?\n[=-]{3,}[ \t]*\r?$", text):
+    for match in SETEXT_HEADING_RE.finditer(text):
         heading_candidates.append((match.start("title"), match.group("title")))
     first = re.match(r"\A[ \t]*(?P<title>[^\n\r]{1,48})\r?\n[ \t]*\r?\n", text)
-    if first and not first.group("title").lstrip().startswith("#"):
+    if first and first.group("title").strip() and not first.group("title").lstrip().startswith("#"):
         heading_candidates.append((first.start("title"), first.group("title")))
     for offset, title in heading_candidates:
         marker = HEADING_RHETORIC.search(title)
@@ -510,7 +626,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
         absolute = offset + marker.start()
         synthetic = re.match(r".", text[absolute:])
         if synthetic:
-            line, column = _line_and_column(text, absolute)
+            line, column = _line_and_column(raw, absolute)
             findings.append(
                 Finding(
                     rule_id="RW-W-223",
@@ -519,7 +635,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                     message="标题疑似直接输出重要性判断、二元反转或内部结论；请改为读者可识别的对象、事件或问题。",
                     line=line,
                     column=column,
-                    excerpt=_excerpt_for(text, absolute),
+                    excerpt=_excerpt_for(raw, absolute),
                 )
             )
 
@@ -529,7 +645,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
             markers = list(RHETORICAL_STACK.finditer(paragraph))
             if len(markers) >= 2:
                 absolute = paragraph_start + markers[0].start()
-                line, column = _line_and_column(text, absolute)
+                line, column = _line_and_column(raw, absolute)
                 findings.append(
                     Finding(
                         rule_id="RW-W-227",
@@ -538,13 +654,44 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                         message="同一段落连续使用强化、自证、反转或推论标记，但不一定增加事实；请按事实、条件和结论重组。",
                         line=line,
                         column=column,
-                        excerpt=_excerpt_for(text, absolute),
+                        excerpt=_excerpt_for(raw, absolute),
+                    )
+                )
+            buzzwords = list(BUZZWORD_TOKENS.finditer(paragraph))
+            if len(buzzwords) >= 3:
+                absolute = paragraph_start + buzzwords[0].start()
+                line, column = _line_and_column(raw, absolute)
+                findings.append(
+                    Finding(
+                        rule_id="RW-W-232",
+                        severity="warn",
+                        category="buzzword-stacking",
+                        message="同一段落密集堆叠多个互联网或职场黑话，信息密度偏低；请拆解为主体、动作、对象、指标和因果关系。",
+                        line=line,
+                        column=column,
+                        excerpt=_excerpt_for(raw, absolute),
                     )
                 )
         paragraph_start += len(paragraph)
         following = re.match(r"\r?\n[ \t]*\r?\n", text[paragraph_start:])
         if following:
             paragraph_start += len(following.group(0))
+
+    transition_cluster = _has_window_cluster(list(ADDITIVE_TRANSITIONS.finditer(text)), 3, 600)
+    tail_cluster = _has_window_cluster(list(SHALLOW_PARTICIPLE_TAILS.finditer(text)), 2, 800)
+    homogenized_anchor = _first_match(
+        sorted(
+            [m for m in (transition_cluster, tail_cluster) if m is not None],
+            key=lambda item: item.start(),
+        )
+    )
+    if homogenized_anchor is not None:
+        add(
+            "RW-W-234",
+            "homogenized-transition-tail-stacking",
+            "相邻句段连续堆叠机械递进连接词或空泛拔高尾句，容易形成高重复模板感；请改为直接主谓宾推进并按证据权重调整句长。",
+            homogenized_anchor,
+        )
 
     bullet_items = list(
         re.finditer(
@@ -560,7 +707,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
     ]
     if len(short_fragments) >= 3:
         match = short_fragments[0]
-        line, column = _line_and_column(text, match.start())
+        line, column = _line_and_column(raw, match.start())
         findings.append(
             Finding(
                 rule_id="RW-W-229",
@@ -569,7 +716,7 @@ def _composite_findings(text: str, profiles: frozenset[str]) -> list[Finding]:
                 message="连续短横杠项目可能把正文切成标签碎片；请合并为连续论述或改用有实际层级的结构。正式条款和操作清单可保留。",
                 line=line,
                 column=column,
-                excerpt=_excerpt_for(text, match.start()),
+                excerpt=_excerpt_for(raw, match.start()),
             )
         )
 
@@ -739,6 +886,10 @@ EXEMPTIONS: tuple[Exemption, ...] = (
     # A transcript's content is exactly chat turns and closings.
     Exemption("dialogue-transcript", "RW-F-001", "downgrade", "对话标签是转写内容"),
     Exemption("dialogue-transcript", "RW-W-103", "ignore", "聊天式收尾是转写记录的内容"),
+    Exemption("dialogue-transcript", "RW-W-230", "ignore", "对话转写可包含口语思考停顿"),
+    Exemption("dialogue-transcript", "RW-W-231", "ignore", "对话转写保留受访者或发言人原话"),
+    Exemption("dialogue-transcript", "RW-W-232", "ignore", "对话转写保留受访者或发言人原话"),
+    Exemption("dialogue-transcript", "RW-W-233", "ignore", "对话转写保留口语钩子与语气词"),
     # An editorial audit report quotes leakage and edits as evidence.
     Exemption("editorial-audit", "RW-F-001", "downgrade", "审计报告引用泄漏作为证据"),
     Exemption("editorial-audit", "RW-F-002", "downgrade", "审计报告引用推理泄漏作为证据"),
@@ -746,9 +897,12 @@ EXEMPTIONS: tuple[Exemption, ...] = (
     Exemption("editorial-audit", "RW-F-004", "downgrade", "审计报告引用指令复述作为证据"),
     Exemption("editorial-audit", "RW-F-005", "downgrade", "审计报告引用工具泄漏作为证据"),
     Exemption("editorial-audit", "RW-W-102", "ignore", "审计报告本就记录编辑待办"),
-    # Bold-labeled list items are a standard, functional form in these genres.
+    Exemption("editorial-audit", "RW-W-230", "ignore", "审计报告可引用推理独白残留"),
+    # Bold-labeled list items and formal item lists are functional in these genres.
     Exemption("official-document", "RW-W-205", "ignore", "公文条目式结构是规范形式"),
+    Exemption("official-document", "RW-W-229", "ignore", "公文清单条目可为简短事项"),
     Exemption("policy-document", "RW-W-205", "ignore", "政策条文的结构化条目是规范形式"),
+    Exemption("policy-document", "RW-W-229", "ignore", "政策清单条目可为简短事项"),
     Exemption("public-article", "RW-W-205", "ignore", "公众号常用加粗小标题分节"),
     Exemption("research-report", "RW-W-205", "ignore", "研究报告常用结构化要点"),
     Exemption("marketing-copy", "RW-W-205", "ignore", "营销文案常用加粗卖点列表"),
@@ -830,13 +984,20 @@ def lint_text(
 ) -> list[Finding]:
     ignored = set(ignored_rules)
     active = frozenset(profiles)
+    prose_text = _mask_non_prose(text)
+    setext_underlines = {
+        match.start("underline") for match in SETEXT_HEADING_RE.finditer(prose_text)
+    }
     findings: list[Finding] = []
     seen: set[tuple[str, int]] = set()
 
     for rule in RULES:
         if rule.rule_id in ignored:
             continue
-        for match in re.finditer(rule.pattern, text, rule.flags):
+        target = text if rule.severity == "fail" else prose_text
+        for match in re.finditer(rule.pattern, target, rule.flags):
+            if rule.rule_id == "RW-W-228" and match.start() in setext_underlines:
+                continue
             action, profile = (
                 _resolve_match_action(rule.rule_id, match.group(0), active)
                 if active
@@ -870,7 +1031,14 @@ def lint_text(
                 )
             )
 
-    findings.extend(_composite_findings(text, active))
+    for item in _composite_findings(prose_text, active, source_text=text):
+        if item.rule_id in ignored:
+            continue
+        action, _ = _resolve_action(item.rule_id, active) if active else (None, None)
+        if action == "ignore":
+            continue
+        findings.append(item)
+
     return sorted(findings, key=lambda item: (item.line, item.column, item.rule_id))
 
 

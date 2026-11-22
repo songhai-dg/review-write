@@ -117,22 +117,54 @@ def _scan_bytes(data: bytes, *, documentary_only: bool = False) -> list[dict[str
     return signals
 
 
+def _dedupe_signals(signals: list[dict[str, str]]) -> list[dict[str, str]]:
+    by_name: dict[str, dict[str, str]] = {}
+    for item in signals:
+        existing = by_name.get(item["name"])
+        if existing is None or (
+            existing["status"] == "reference_found" and item["status"] == "detected"
+        ):
+            by_name[item["name"]] = item
+    return list(by_name.values())
+
+
 def audit_file(path: Path) -> dict[str, object]:
     """Audit a file's observable provenance markers and embedded text controls."""
 
     data = path.read_bytes()
-    documentary_only = path.suffix.lower() in {
-        ".txt",
-        ".md",
-        ".markdown",
-        ".csv",
-        ".json",
-        ".xml",
-        ".html",
-        ".docx",
-    }
-    signals = _scan_bytes(data, documentary_only=documentary_only)
+    suffix = path.suffix.lower()
+    plain_text_suffixes = {".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".html"}
+    ooxml_suffixes = {".docx", ".pptx"}
     findings: list[AuditFinding] = []
+    text_parts: list[str] = []
+    signals: list[dict[str, str]] = []
+
+    if suffix in ooxml_suffixes:
+        try:
+            with zipfile.ZipFile(path) as archive:
+                for name in archive.namelist():
+                    entry_bytes = archive.read(name)
+                    if name.endswith((".xml", ".rels")):
+                        signals.extend(_scan_bytes(entry_bytes, documentary_only=True))
+                        text_parts.append(entry_bytes.decode("utf-8", errors="replace"))
+                    else:
+                        signals.extend(_scan_bytes(entry_bytes, documentary_only=False))
+            signals = _dedupe_signals(signals)
+        except zipfile.BadZipFile:
+            findings.append(
+                AuditFinding(
+                    code="RW-P-F-001",
+                    severity="fail",
+                    subject="invalid-office-container",
+                    message=f"文件扩展名为 {suffix.upper().lstrip('.')}，但容器无法读取；未完成完整审计。",
+                )
+            )
+    else:
+        documentary_only = suffix in plain_text_suffixes
+        signals = _scan_bytes(data, documentary_only=documentary_only)
+        if suffix in plain_text_suffixes:
+            text_parts.append(data.decode("utf-8", errors="replace"))
+
     if not signals:
         findings.append(
             AuditFinding(
@@ -143,27 +175,10 @@ def audit_file(path: Path) -> dict[str, object]:
             )
         )
 
-    text_parts: list[str] = []
-    if path.suffix.lower() in {".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".html"}:
-        text_parts.append(data.decode("utf-8", errors="replace"))
-    elif path.suffix.lower() == ".docx":
-        try:
-            with zipfile.ZipFile(path) as archive:
-                for name in archive.namelist():
-                    if name.endswith(".xml"):
-                        text_parts.append(archive.read(name).decode("utf-8", errors="replace"))
-        except zipfile.BadZipFile:
-            findings.append(
-                AuditFinding(
-                    code="RW-P-F-001",
-                    severity="fail",
-                    subject="invalid-office-container",
-                    message="文件扩展名为 DOCX，但容器无法读取；未完成完整审计。",
-                )
-            )
     for part in text_parts:
         findings.extend(_format_controls(part))
 
+    has_detected_signal = any(item["status"] == "detected" for item in signals)
     return {
         "status": "completed" if not any(item.severity == "fail" for item in findings) else "incomplete",
         "input_kind": "file",
@@ -171,15 +186,15 @@ def audit_file(path: Path) -> dict[str, object]:
         "size_bytes": len(data),
         "source_provenance": {
             "status": (
-                "reference_found"
-                if signals and documentary_only
-                else "signal_detected"
+                "signal_detected"
+                if has_detected_signal
+                else "reference_found"
                 if signals
                 else "cannot_determine"
             ),
             "reason": (
                 "文件中发现可观察来源标记，但仍需平台或签名方验证。"
-                if signals and not documentary_only
+                if has_detected_signal
                 else "文本或文档中的技术名称只是文字引用，不代表文件含有对应来源信号。"
                 if signals
                 else "未发现本工具支持的可观察标记，不能据此断定来源信息不存在。"

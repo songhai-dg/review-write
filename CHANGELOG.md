@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 - 2026-11-22
+
+- 新增跨模型写作特征校准指南（`references/ai-writing-signals.md`）：覆盖 GPT、Gemini、Claude、Grok、DeepSeek 与通义 Qwen 初稿的常见结构倾向、口头禅与审写收敛处方，并补充证据保持型去同质化五步法。
+- 强化内部推理与工具残留硬门：扩展 `RW-F-002` 拦截 `<think>`、`<thought>`、`<reasoning>`、`<scratchpad>` 等推理通道标签，扩展 `RW-F-005` 拦截 `Generated with Claude Code`、`Co-Authored-By` 等混入正式正文的自动尾注，并在 `SKILL.md` 与 `references/leakage.md` 明确待审原稿防提示注入边界。
+- 新增 `RW-W-230—RW-W-234` 五项上下文与组合信号：识别推理模型自言自语独白残留（`RW-W-230`）、中英文互联网与职场黑话搭配（`RW-W-231`）及同段黑话堆叠（`RW-W-232`）、网感钩子与伪坦诚垫词（`RW-W-233`），以及短距离机械递进连接词链与空泛拔高尾句堆叠（`RW-W-234`），同时完整保留闭环控制、模型对齐、时间颗粒度、`load-bearing wall` 等专业术语。
+- 修复并加固预检与门禁工程细节：风格扫描自动屏蔽 Markdown 围栏代码块与 YAML frontmatter 防误报，正确区分 Setext 二级标题下划线与 `RW-W-228` 装饰横线，统一单条与组合规则的 `--ignore-rule` 与体裁豁免（公文与政策体裁豁免 `RW-W-229` 短清单），并在 `reviewwrite_gate.py` 默认模式下向 `stderr` 输出具体语义复核失败项。
+- 增强 `reviewwrite_provenance.py` 容器只读审计：新增 `.pptx` XML 控制字符扫描，并区分 `.docx`/`.pptx` 内嵌媒体二进制来源标记与 XML 正文文字引用；`validate_skill.py` 扩展为全量校验 6 处同步版本号。
+- 新增中英文合成对照 few-shot（`zh-buzzword-dehomogenization-001`、`en-cross-model-dehomogenization-001`），审计并同步 `sources.lock.json` 与 `NOTICE.md` 上游记录（`op7418/Humanizer-zh`、`blader/humanizer`），继续坚持“不凭模型记忆补写原文未提供的外部事实”的核心边界。
+
 ## 1.0.0 - 2026-08-30
 
 - 将最终交付从单层词组预检升级为“确定性规则 + 正文哈希绑定语义复核”双层门禁；缺少有效复核记录时不再输出正文。
