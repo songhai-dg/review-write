@@ -196,19 +196,13 @@ def validate() -> list[str]:
                     errors.append(f"上游缺少 license: {source.get('name')}")
 
     try:
+        import bump_version
+
         compatibility = json.loads((ROOT / "compatibility.json").read_text(encoding="utf-8"))
         release_policy = json.loads((ROOT / "release-policy.json").read_text(encoding="utf-8"))
-        skill_version = re.search(
-            r'(?m)^    version: "([^"]+)"$',
-            (ROOT / "SKILL.md").read_text(encoding="utf-8"),
-        ).group(1)
-        versions = {
-            skill_version,
-            str(compatibility["reviewwrite_version"]),
-            str(release_policy["current_version"]),
-        }
-        if len(versions) != 1:
-            errors.append(f"版本字段不一致: {sorted(versions)}")
+        all_versions = bump_version.current_versions()
+        if len(set(all_versions.values())) != 1:
+            errors.append(f"版本字段不一致: {all_versions}")
         required_platforms = {
             "codex",
             "claude-code",

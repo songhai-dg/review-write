@@ -68,6 +68,28 @@ class ProvenanceAuditTests(unittest.TestCase):
                 {finding["code"] for finding in result["findings"]},
             )
 
+    def test_pptx_xml_and_docx_embedded_media_distinction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pptx_path = Path(directory) / "deck.pptx"
+            with zipfile.ZipFile(pptx_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("ppt/slides/slide1.xml", "<a:t>演示\u200b讨论 C2PA 标准</a:t>")
+            pptx_result = reviewwrite_provenance.audit_file(pptx_path)
+            self.assertEqual(pptx_result["source_provenance"]["status"], "reference_found")
+            self.assertIn(
+                "RW-P-W-001",
+                {finding["code"] for finding in pptx_result["findings"]},
+            )
+
+            docx_media = Path(directory) / "with_media.docx"
+            with zipfile.ZipFile(docx_media, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", "<w:t>普通正文</w:t>")
+                archive.writestr("word/media/image1.jpg", b"\xff\xd8\xff C2PA JUMBF container")
+            media_result = reviewwrite_provenance.audit_file(docx_media)
+            self.assertEqual(media_result["source_provenance"]["status"], "signal_detected")
+            self.assertTrue(
+                any(item["status"] == "detected" for item in media_result["observable_signals"])
+            )
+
     def test_cli_json_output(self):
         result = subprocess.run(
             [

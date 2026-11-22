@@ -550,7 +550,8 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertIn("official-document", result.stdout)
 
     def test_every_exemption_targets_a_real_rule(self) -> None:
-        rule_ids = {rule.rule_id for rule in reviewwrite_lint.RULES}
+        rule_ids = reviewwrite_lint.ALL_RULE_IDS
+        direct_rule_ids = {rule.rule_id for rule in reviewwrite_lint.RULES}
         for exemption in reviewwrite_lint.EXEMPTIONS:
             self.assertIn(exemption.rule_id, rule_ids)
             self.assertIn(exemption.action, {"ignore", "downgrade"})
@@ -559,13 +560,14 @@ class ReviewWriteLintTests(unittest.TestCase):
                 reviewwrite_lint.ALL_PROFILES,
             )
         for exemption in reviewwrite_lint.MATCH_EXEMPTIONS:
-            self.assertIn(exemption.rule_id, rule_ids)
+            self.assertIn(exemption.rule_id, direct_rule_ids)
             self.assertIn(exemption.action, {"ignore", "downgrade"})
             self.assertIn(exemption.profile, reviewwrite_lint.ALL_PROFILES)
 
     def test_ignore_rule(self) -> None:
         findings = reviewwrite_lint.lint_text(
-            "本节将介绍研究方法。", ignored_rules=["RW-W-101"]
+            "本节将介绍研究方法。研究表明，效果明显。",
+            ignored_rules=["RW-W-101", "RW-W-218"],
         )
         self.assertEqual(findings, [])
 
@@ -946,6 +948,139 @@ class ReviewWriteLintTests(unittest.TestCase):
         self.assertIn("## 安装与安全", notes)
         self.assertIn("SHA-256", notes)
         self.assertIn("--context", notes)
+
+    def test_v1_1_reasoning_tags_and_agent_footers_are_hard_failures(self) -> None:
+        think_leak = "<think>先核对样本口径</think>\n样本包含 186 家企业。"
+        footer_leak = "样本包含 186 家企业。\n🤖 Generated with Claude Code\nCo-Authored-By: Gemini"
+        self.assertIn(
+            "RW-F-002",
+            {item.rule_id for item in reviewwrite_lint.lint_text(think_leak)},
+        )
+        self.assertIn(
+            "RW-F-005",
+            {item.rule_id for item in reviewwrite_lint.lint_text(footer_leak)},
+        )
+
+    def test_v1_1_reasoning_monologue_residue_and_transcript_exemption(self) -> None:
+        monologue_zh = "让我先拆解一下这个问题。等等，这里需要重新审视样本期限。"
+        monologue_en = "Let me step back and double-check the baseline. Wait—let me rethink."
+        self.assertIn(
+            "RW-W-230",
+            {item.rule_id for item in reviewwrite_lint.lint_text(monologue_zh)},
+        )
+        self.assertIn(
+            "RW-W-230",
+            {item.rule_id for item in reviewwrite_lint.lint_text(monologue_en)},
+        )
+        self.assertNotIn(
+            "RW-W-230",
+            {
+                item.rule_id
+                for item in reviewwrite_lint.lint_text(
+                    monologue_zh, profiles=["dialogue-transcript"]
+                )
+            },
+        )
+
+    def test_v1_1_internet_buzzwords_preserve_domain_terminology(self) -> None:
+        collocation = "本项目以私域运营为抓手，拉通对齐颗粒度并跑通商业闭环。"
+        stack = "团队围绕痛点调整打法，强化生态位卡位并在私域完成复盘。"
+        en_cliche = "This is a truly load-bearing insight that will move the needle."
+        technical_clean = (
+            "系统采用双环闭环控制算法，数据时间颗粒度为月度。"
+            "模型对齐训练完成后，承重结构测试见 load-bearing wall 规范。"
+        )
+        self.assertIn(
+            "RW-W-231",
+            {item.rule_id for item in reviewwrite_lint.lint_text(collocation)},
+        )
+        self.assertIn(
+            "RW-W-232",
+            {item.rule_id for item in reviewwrite_lint.lint_text(stack)},
+        )
+        self.assertIn(
+            "RW-W-231",
+            {item.rule_id for item in reviewwrite_lint.lint_text(en_cliche)},
+        )
+        self.assertFalse(
+            {"RW-W-231", "RW-W-232"}
+            & {item.rule_id for item in reviewwrite_lint.lint_text(technical_clean)}
+        )
+
+    def test_v1_1_cross_model_engagement_hooks_and_candor_filler(self) -> None:
+        zh_hook = "说白了，这方案成本太高。扎心的是，预算尚未获批。"
+        en_hook = "Honestly, here's the kicker: no fluff, buckle up and let's dive in."
+        self.assertIn(
+            "RW-W-233",
+            {item.rule_id for item in reviewwrite_lint.lint_text(zh_hook)},
+        )
+        self.assertIn(
+            "RW-W-233",
+            {item.rule_id for item in reviewwrite_lint.lint_text(en_hook)},
+        )
+        self.assertNotIn(
+            "RW-W-233",
+            {
+                item.rule_id
+                for item in reviewwrite_lint.lint_text(
+                    zh_hook, profiles=["dialogue-transcript"]
+                )
+            },
+        )
+
+    def test_v1_1_homogenized_transitions_and_shallow_tails(self) -> None:
+        zh_transitions = "样本覆盖三省。此外，问卷回收率为89%。与此同时，复核误差低于2%。不仅如此，面板跨度达五年。"
+        en_tails = (
+            "Inventory fell by 14%, highlighting the importance of buffer discipline. "
+            "Lead times stabilized in Q3, underscoring the need for supplier audits."
+        )
+        single_clean = "样本覆盖三省。此外，问卷回收率为89%，并在附录列出抽样框限制。"
+        self.assertIn(
+            "RW-W-234",
+            {item.rule_id for item in reviewwrite_lint.lint_text(zh_transitions)},
+        )
+        self.assertIn(
+            "RW-W-234",
+            {item.rule_id for item in reviewwrite_lint.lint_text(en_tails)},
+        )
+        self.assertNotIn(
+            "RW-W-234",
+            {item.rule_id for item in reviewwrite_lint.lint_text(single_clean)},
+        )
+
+    def test_v1_1_code_fences_yaml_frontmatter_and_setext_h2_are_not_misflagged(self) -> None:
+        markdown_doc = (
+            "---\n"
+            "title: Quarterly Audit\n"
+            "owner: ops\n"
+            "---\n"
+            "项目实施进度\n"
+            "------------\n\n"
+            "```python\n"
+            "# Initialize baseline configuration.\n"
+            "---\n"
+            "- item1\n"
+            "- item2\n"
+            "- item3\n"
+            "```\n\n"
+            "2026年第二季度完成首批 42 家网点验收。\n"
+        )
+        self.assertEqual(reviewwrite_lint.lint_text(markdown_doc), [])
+        fenced_leak = "```text\n<think>internal chain</think>\n```\n正文。"
+        self.assertIn(
+            "RW-F-002",
+            {item.rule_id for item in reviewwrite_lint.lint_text(fenced_leak)},
+        )
+        official_items = "通知事项如下：\n- 核验营业执照\n- 提交授权委托书\n- 留存归档回执\n"
+        self.assertNotIn(
+            "RW-W-229",
+            {
+                item.rule_id
+                for item in reviewwrite_lint.lint_text(
+                    official_items, profiles=["official-document"]
+                )
+            },
+        )
 
 
 if __name__ == "__main__":

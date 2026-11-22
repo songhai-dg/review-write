@@ -121,6 +121,32 @@
       "register": "professional",
       "source": "synthetic",
       "license": "project-original"
+    },
+    {
+      "id": "zh-buzzword-dehomogenization-001",
+      "path": "buzzword-dehomogenization.zh.md",
+      "language": "zh-CN",
+      "locale": "zh-CN",
+      "discourse_community": "professional-general",
+      "genres": ["research-report", "executive-memo", "public-article", "general"],
+      "issue_tags": ["buzzword-collocation", "buzzword-stacking", "reasoning-monologue-residue", "homogenized-transition"],
+      "protected_features": ["facts", "numbers", "qualifiers"],
+      "register": "professional",
+      "source": "synthetic",
+      "license": "project-original"
+    },
+    {
+      "id": "en-cross-model-dehomogenization-001",
+      "path": "cross-model-dehomogenization.en.md",
+      "language": "en",
+      "locale": "en-general",
+      "discourse_community": "professional-general",
+      "genres": ["executive-memo", "research-report", "academic-paper", "general"],
+      "issue_tags": ["engagement-hook-cliche", "buzzword-collocation", "homogenized-transition", "reasoning-monologue-residue"],
+      "protected_features": ["facts", "numbers", "qualifiers"],
+      "register": "professional",
+      "source": "synthetic",
+      "license": "project-original"
     }
   ]
 }

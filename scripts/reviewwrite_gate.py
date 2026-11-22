@@ -166,6 +166,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"L{item['line']}:C{item['column']} {item['excerpt']}",
                 file=sys.stderr,
             )
+        for error in result.get("semantic_errors", []):
+            print(f"SEMANTIC {error}", file=sys.stderr)
     return 0 if result["status"] == "passed" else 1
 
 
